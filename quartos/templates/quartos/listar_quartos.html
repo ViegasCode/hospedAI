@@ -1,0 +1,360 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+
+    /* Etiquetas de serviços */
+.card-body .tag {
+    display: inline-block;
+    background-color: #e6e6ff; /* cor clara */
+    color: #4f46e5; /* texto roxo */
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode para etiquetas */
+body.dark-mode .card-body .tag {
+    background-color: #2a2a4e; /* cor escura */
+    color: #bfc0ff; /* texto claro */
+}
+
+
+/* Container principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Título */
+.container h1 {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: #4f46e5;
+}
+
+/* Filtro de datas */
+form.row.g-3 {
+    background-color: #f4f6fa;
+    padding: 1.8rem 2.2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    transition: all 0.3s;
+}
+
+form.row.g-3 label {
+    font-weight: 500;
+    color: #333;
+}
+
+form.row.g-3 input[type="date"] {
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 0.6rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+form.row.g-3 input[type="date"]:focus {
+    border-color: #4f46e5;
+    outline: none;
+    box-shadow: 0 0 5px rgba(79,70,229,0.3);
+}
+
+/* Botão filtro */
+.btn-primary {
+    background: linear-gradient(45deg, #4f46e5, #6366f1, #4f46e5);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 25px;
+    padding: 0.55rem 1.2rem;
+    transition: all 0.3s ease, background-position 1s;
+    box-shadow: 0 6px 15px rgba(79,70,229,0.3);
+}
+
+.btn-primary:hover {
+    background-position: 100% 0;
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* Cards */
+.row.g-4 {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 300px;
+    height: 450px;
+    background: linear-gradient(135deg, #ffffff, #e6f0ff);
+    background-size: 400% 400%;
+    transition: transform 0.4s, box-shadow 0.4s, background-position 0.4s, filter 0.4s;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+    filter: brightness(1.03);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffffff, #e6f0ff, #ffffff, #e6f0ff);
+    background-size: 400% 400%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.card:hover::before {
+    animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Imagem */
+.card-img-top {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    border-radius: 20px 20px 0 0;
+    z-index: 1;
+}
+
+.card-img-top:hover {
+    transform: scale(1.15);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+/* Conteúdo do card */
+.card-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    flex-grow: 1;
+}
+
+.card-body .content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+/* Títulos e textos */
+.card-body h5 {
+    font-weight: 700;
+    color: #4f46e5;
+    margin-bottom: 0.5rem;
+    font-size: 1.15rem;
+}
+
+.card-body p {
+    margin-bottom: 0.3rem;
+    font-size: 0.88rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.card-body p i {
+    color: #4f46e5;
+}
+
+/* Botão reservar */
+.btn-success {
+    width: 120px;
+    align-self: center;
+    text-align: center;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(45deg, #4f46e5, #6366f1, #4f46e5);
+    background-size: 300% 300%;
+    border-radius: 25px;
+    padding: 0.45rem 1rem;
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.3s ease, background-position 1s;
+    box-shadow: 0 6px 15px rgba(79,70,229,0.25);
+    font-size: 0.9rem;
+}
+
+.btn-success:hover {
+    background-position: 100% 0;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(79,70,229,0.45);
+}
+
+/* Dark Mode */
+body.dark-mode .card {
+    background: #1a1a2e;
+    box-shadow: 0 6px 20px rgba(79,70,229,0.5);
+}
+
+/* Adicionado: escurecer card-body */
+body.dark-mode .card-body {
+    background: #1a1a2e; /* mesmo tom do card ou ligeiramente diferente */
+    color: #e0e0e0;
+}
+
+body.dark-mode {
+    background: #0d1117;
+    color: #e0e0e0;
+}
+
+body.dark-mode form.row.g-3 {
+    background: #1a1a2e;
+    box-shadow: 0 6px 15px rgba(79,70,229,0.35);
+}
+
+body.dark-mode form.row.g-3 label,
+body.dark-mode .card-body p {
+    color: #e0e0e0;
+}
+
+body.dark-mode .card {
+    background: #1a1a2e;
+    box-shadow: 0 6px 20px rgba(79,70,229,0.5);
+}
+
+body.dark-mode .card-body h5 {
+    color: #e0e0e0;
+}
+
+/* Responsividade */
+@media (max-width: 767px) {
+    .card {
+        width: 100%;
+        height: auto;
+    }
+    .card-img-top {
+        height: 200px;
+    }
+    form.row.g-3 {
+        flex-direction: column;
+        align-items: flex-start;
+
+        /* Container de tags */
+/* Container de tags abaixo do título Serviços */
+.card-body .tags-container {
+    display: flex;
+    flex-wrap: wrap;       /* permite quebrar para a próxima linha */
+    gap: 5px 5px;          /* espaçamento entre etiquetas */
+    margin-top: 5px;
+}
+
+/* Etiquetas individuais */
+.card-body .tag {
+    display: inline-block;
+    background-color: #e6e6ff; /* cor clara */
+    color: #4f46e5;            /* texto roxo */
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;        /* mantém a etiqueta inteira na mesma linha */
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode para etiquetas */
+body.dark-mode .card-body .tag {
+    background-color: #2a2a4e; /* cor escura */
+    color: #bfc0ff;            /* texto claro */
+}
+
+
+    }
+}
+</style>
+
+<div class="container">
+    <h1>Quartos disponíveis</h1>
+
+    <!-- Filtro de datas -->
+    <form method="get" class="mb-4 row g-3">
+        <div class="col-md-3">
+            <label for="data_entrada">Data de entrada:</label>
+            <input type="date" id="data_entrada" name="data_entrada" value="{{ request.GET.data_entrada }}">
+        </div>
+        <div class="col-md-3">
+            <label for="data_saida">Data de saída:</label>
+            <input type="date" id="data_saida" name="data_saida" value="{{ request.GET.data_saida }}">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- Lista de quartos -->
+    <div class="row g-4">
+        {% for quarto in quartos %}
+        <div class="col-auto">
+            <div class="card">
+                {% if quarto.fotos.all %}
+                    <img src="{{ quarto.fotos.all.0.imagem.url }}" class="card-img-top" alt="Foto do {{ quarto.tipo }}">
+                {% else %}
+                    <img src="{% static 'img/default_quarto.jpg' %}" class="card-img-top" alt="Sem foto">
+                {% endif %}
+                <div class="card-body">
+                    <div class="content">
+                        <h5>{{ quarto.tipo }} - Quarto {{ quarto.numero }}</h5>
+                        <p><i class="fas fa-money-bill-wave"></i> <strong>Tarifa:</strong> R$ {{ quarto.tarifa }}</p>
+                        <p><i class="fas fa-concierge-bell"></i> <strong>Serviços:</strong></p>
+                        <div class="tags-container">
+                            {% if quarto.servicos.all %}
+                                {% for servico in quarto.servicos.all %}
+                                    <span class="tag">{{ servico.nome }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="tag">Nenhum serviço</span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    <a href="{% url 'nova_reserva' %}?data_entrada={{ request.GET.data_entrada }}&data_saida={{ request.GET.data_saida }}" class="btn btn-success">Reservar</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p>Nenhum quarto disponível nesse período.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}

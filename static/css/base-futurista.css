@@ -1,0 +1,131 @@
+/* Topbar futurista */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: linear-gradient(90deg, #4f46e5, #3b82f6);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: gradientShift 10s ease infinite;
+    transition: all 0.3s ease;
+}
+
+
+
+#particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* garante que fique atrás de tudo */
+}
+
+
+/* Gradiente animado na topbar */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+header {
+    background-size: 200% 200%;
+}
+
+/* Logo */
+.logo-area { display: flex; align-items: center; gap: 10px; }
+.logo { height: 30px; transition: transform 0.3s; }
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(79,70,229,0.8);
+}
+
+/* Hover na logo */
+.logo:hover {
+    transform: scale(1.1);
+}
+
+/* Navegação */
+nav.main-nav {
+    display: flex;
+    gap: 15px;
+}
+nav.main-nav a {
+    color: #ffffff;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+nav.main-nav a:hover {
+    background-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(79,70,229,0.6);
+}
+
+/* User menu */
+.user-menu .dropdown-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+.user-menu .dropdown-btn:hover {
+    background-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(79,70,229,0.6);
+}
+
+/* Dropdown futurista */
+.user-menu .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #111;
+    color: #ffffff;
+    min-width: 150px;
+    box-shadow: 0 5px 20px rgba(79,70,229,0.5);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+.user-menu:hover .dropdown-content { display: block; }
+.user-menu .dropdown-content a,
+.user-menu .dropdown-content form button {
+    display: block;
+    padding: 10px 15px;
+    color: #ffffff;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.user-menu .dropdown-content a:hover,
+.user-menu .dropdown-content form button:hover {
+    background-color: rgba(79,70,229,0.2);
+    transform: translateX(3px);
+}

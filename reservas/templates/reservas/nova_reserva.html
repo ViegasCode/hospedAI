@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<h2>Fazer Reserva</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Reservar</button>
+</form>
+
+<!--&lt;!&ndash; Flatpickr &ndash;&gt;-->
+<!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">-->
+<!--<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>-->
+<!--<script>-->
+<!--    flatpickr("#id_data_entrada", { dateFormat: "Y/m/d", minDate: "today" });-->
+<!--    flatpickr("#id_data_saida", { dateFormat: "Y/m/d", minDate: "today" });-->
+<!--</script>-->
+
+{% endblock %}

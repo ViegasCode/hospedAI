@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>HospedAI - Calendário e Dashboard Vivo</title>
+<style>
+  /* Reset básico */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f6fa;
+    color: #333;
+    transition: background 0.3s ease;
+  }
+
+  /* Topbar */
+  .topbar {
+    width: 100%;
+    background-color: #1a3f7a;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .topbar nav a {
+    color: #fff;
+    margin-left: 15px;
+    text-decoration: none;
+    font-weight: normal;
+    transition: color 0.3s ease;
+  }
+  .topbar nav a:hover { color: #f3f4f6; }
+
+  h2 {
+    margin-top: 40px;
+    color: #1a3f7a;
+    transition: color 0.3s ease;
+  }
+
+  /* filtro */
+  .filter-dates {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .filter-dates input {
+    padding: 4px 6px;       /* menor padding */
+    border-radius: 5px;     /* levemente menor */
+    border: 1px solid #ccc;
+    flex: 0 0 120px;        /* largura fixa menor */
+    font-size: 0.85em;      /* fonte menor */
+    transition: border 0.3s ease;
+  }
+  .filter-dates input:focus { border-color: #1a3f7a; outline: none; }
+  .filter-dates button {
+    padding: 6px 12px;
+    background: #1a3f7a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-size: 0.85em;
+  }
+  .filter-dates button:hover {
+    background: #305da6;
+    transform: scale(1.05);
+  }
+
+  /* Calendário */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 25px;
+  }
+  .calendar-header {
+    font-weight: bold;
+    text-align: center;
+    padding: 6px 0;
+    background: #e0e4eb;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #333;
+    transition: background 0.3s ease;
+  }
+  .day {
+    background: #fff;
+    border-radius: 10px;
+    padding: 2px 6px 6px 6px;
+    cursor: pointer;
+    border: 1px solid #e0e4eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 70px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+  .day:hover {
+    transform: translateY(-3px);
+    border-color: #888;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .day.selected {
+    border: 2px solid #555;
+    box-shadow: 0 0 12px rgba(26,63,122,0.4);
+  }
+  .day strong {
+    font-size: 0.9em;
+    margin: 0;
+    color: #555;
+    text-align: center;
+  }
+
+  /* Casas dos quartos */
+  .free-info {
+    font-size: 1em;
+    font-weight: bold;
+    text-align: center;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 30px;
+    color: #222;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .free-info::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    width: 50px;
+    height: 14px;
+    background-color: inherit;
+    clip-path: polygon(0% 100%, 50% 0%, 100% 100%);
+    z-index: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: filter 0.3s ease;
+    filter: brightness(1);
+  }
+  .day:hover .free-info::before { filter: brightness(1.2); }
+  .day.selected .free-info { animation: pulse 0.6s ease-in-out; }
+
+  .availability-high { background-color: #d1fae5; color: #065f46; }
+  .availability-medium { background-color: #fef08a; color: #92400e; }
+  .availability-low { background-color: #fecaca; color: #991b1b; }
+
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  /* Dashboard */
+  .dashboard {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    flex: 1;
+    min-width: 180px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+  .card h3 { margin: 0 0 10px 0; color: #333; }
+  .card span { font-size: 1.8em; font-weight: bold; color: #1a3f7a; }
+
+  /* Detalhes */
+  .details {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .details > div {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    flex: 1;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .details > div:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.12); }
+  .details h4 { margin-top: 0; color: #333; }
+  ul { padding-left: 20px; margin-top: 10px; }
+  ul li { margin-bottom: 8px; font-size: 0.95em; color: #555; }
+
+  /* Kanban */
+  .kanban-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+  .kanban-column {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .kanban-column:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.12); }
+  .kanban-column h4 { margin-top: 0; color: #333; }
+  .kanban-item {
+    background-color: #f3f4f6;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    text-align: center;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+  .kanban-item:hover { background: #e0e4eb; transform: translateY(-2px); }
+
+  /* Footer */
+  footer {
+    margin-top: 40px;
+    background: #1a3f7a;
+    color: #fff;
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.15);
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  HospedAI
+  <nav>
+    <a href="#">Dashboard</a>
+    <a href="#">Reservas</a>
+    <a href="#">Relatórios</a>
+    <a href="#">Configurações</a>
+  </nav>
+</div>
+
+<h2>Filtrar por Datas</h2>
+<div class="filter-dates">
+  <input type="date" id="checkinDate">
+  <input type="date" id="checkoutDate">
+  <button id="filterBtn">Filtrar</button>
+</div>
+
+<h2>Calendário Mensal</h2>
+<div class="calendar" id="calendar">
+  <div class="calendar-header">Dom</div>
+  <div class="calendar-header">Seg</div>
+  <div class="calendar-header">Ter</div>
+  <div class="calendar-header">Qua</div>
+  <div class="calendar-header">Qui</div>
+  <div class="calendar-header">Sex</div>
+  <div class="calendar-header">Sáb</div>
+</div>
+
+<h2>Dashboard do Dia</h2>
+<div class="dashboard" id="dashboard">
+  <div class="card"><h3>Quartos Livres</h3><span id="freeRooms">0</span></div>
+  <div class="card"><h3>Quartos Ocupados</h3><span id="occupiedRooms">0</span></div>
+  <div class="card"><h3>Check-ins Hoje</h3><span id="checkinsToday">0</span></div>
+  <div class="card"><h3>Check-outs Hoje</h3><span id="checkoutsToday">0</span></div>
+</div>
+
+<h2>Detalhes do Dia</h2>
+<div class="details">
+  <div><h4>Quartos Livres</h4><ul id="freeList"></ul></div>
+  <div><h4>Quartos Ocupados</h4><ul id="occupiedList"></ul></div>
+  <div><h4>Check-ins Hoje</h4><ul id="checkinList"></ul></div>
+</div>
+
+<h2>Kanban de Quartos</h2>
+<div class="kanban">
+  <div class="kanban-grid">
+    <div class="kanban-column">
+      <h4>Livre</h4>
+      <div class="kanban-item">5</div>
+      <div class="kanban-item">8</div>
+      <div class="kanban-item">10</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Ocupado</h4>
+      <div class="kanban-item">1 João Silva</div>
+      <div class="kanban-item">2 Ana Souza</div>
+      <div class="kanban-item">3 Fernanda Alves</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Pendente</h4>
+      <div class="kanban-item">2 Maria Costa</div>
+      <div class="kanban-item">4 Carlos Rocha</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Check-out hoje</h4>
+      <div class="kanban-item">3 Pedro Lima</div>
+      <div class="kanban-item">7 Luiza Almeida</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  &copy; 2025 HospedAI - Todos os direitos reservados.
+</footer>
+
+<script>
+const totalRooms = 4;
+const monthData = Array.from({length: 30}, (_, i) => {
+  const freeRooms = Math.floor(Math.random() * (totalRooms + 1));
+  return { day: i + 1, free: freeRooms };
+});
+
+const todayDetails = {
+  free: [{ room: 'Standard 101', checkout: '26mai' }, { room: 'Standard 102', checkout: '27mai' }],
+  occupied: [{ room: 'Deluxe 201', checkout: '25mai' }],
+  checkins: [{ room: 'Suite 301', checkout: '28mai' }]
+};
+
+const calendar = document.getElementById('calendar');
+monthData.forEach(d => {
+  const dayDiv = document.createElement('div');
+  dayDiv.classList.add('day');
+
+  let availabilityClass = 'availability-high';
+  if (d.free <= 1) availabilityClass = 'availability-low';
+  else if (d.free <= 2) availabilityClass = 'availability-medium';
+
+  dayDiv.innerHTML = `<strong>${d.day}</strong>
+    <span class="free-info ${availabilityClass}">${d.free}/${totalRooms}</span>`;
+  dayDiv.onclick = () => selectDay(d.day);
+  calendar.appendChild(dayDiv);
+});
+
+function selectDay(day) {
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+  const dayDiv = Array.from(calendar.children).find(div => div.innerHTML.includes(`<strong>${day}</strong>`));
+  if (dayDiv) dayDiv.classList.add('selected');
+
+  document.getElementById('freeRooms').textContent = todayDetails.free.length;
+  document.getElementById('occupiedRooms').textContent = todayDetails.occupied.length;
+  document.getElementById('checkinsToday').textContent = todayDetails.checkins.length;
+  document.getElementById('checkoutsToday').textContent = todayDetails.occupied.length + todayDetails.checkins.length;
+
+  const fillList = (id, data) => {
+    const ul = document.getElementById(id);
+    ul.innerHTML = '';
+    data.forEach(r => {
+      const li = document.createElement('li');
+      li.textContent = `${r.room} - ${r.checkout}`;
+      ul.appendChild(li);
+    });
+  }
+  fillList('freeList', todayDetails.free);
+  fillList('occupiedList', todayDetails.occupied);
+  fillList('checkinList', todayDetails.checkins);
+}
+
+// Seleciona automaticamente o primeiro dia
+selectDay(1);
+</script>
+
+</body>
+</html>

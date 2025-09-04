@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HospedAI - Inteligência Artificial para Hotéis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
+  body { background:#0d1117; color:#e0e0e0; scroll-behavior: smooth; overflow-x:hidden; }
+  body.light { background:#f4f6fa; color:#1a1a1a; }
+
+  /* Particles Background */
+  #particles { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; }
+
+  /* Topbar */
+  header { display:flex; justify-content:space-between; align-items:center; padding:20px 50px; background:rgba(0,0,0,0.7); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; border-bottom:1px solid rgba(255,255,255,0.1); }
+  .logo { font-size:28px; font-weight:700; color:#4f46e5; }
+  nav { display:flex; align-items:center; }
+  nav a { margin-left:25px; text-decoration:none; color:#e0e0e0; font-weight:500; position:relative; }
+  nav a::after { content:''; position:absolute; width:0; height:2px; background:#4f46e5; bottom:-4px; left:0; transition:0.3s; }
+  nav a:hover::after { width:100%; }
+  .dark-toggle { margin-left:20px; cursor:pointer; font-weight:600; color:#4f46e5; }
+
+  /* Hero Section */
+  .hero { display:flex; align-items:center; justify-content:space-between; padding:100px 50px; flex-wrap:wrap; }
+  .hero-text { max-width:600px; opacity:0; transform:translateY(50px); transition:0.8s; }
+  .hero-text h1 { font-size:48px; margin-bottom:20px; line-height:1.2; color:#fff; }
+  .hero-text p { font-size:20px; margin-bottom:30px; color:#cbd5e1; }
+  .hero-text button { padding:15px 35px; background:#4f46e5; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 5px 20px rgba(79,70,229,0.5); }
+  .hero-text button:hover { background:#3b3bff; transform:translateY(-3px); }
+
+  .hero-image { opacity:0; transform:translateY(50px); transition:0.8s; margin-top:30px; }
+  #dashboard { width:500px; height:300px; border-radius:20px; background:#1a1a2e; box-shadow:0 15px 40px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:24px; }
+
+  /* Features */
+  .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px; padding:80px 50px; }
+  .feature-card { background:#1a1a2e; border-radius:20px; padding:40px 30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); opacity:0; transform:translateY(50px); transition:0.8s; }
+  .feature-card:hover { transform:translateY(-10px) scale(1.03); box-shadow:0 15px 30px rgba(79,70,229,0.5); }
+  .feature-card h3 { font-size:22px; margin-bottom:15px; color:#4f46e5; }
+  .feature-card p { font-size:16px; color:#cbd5e1; }
+
+  /* CTA */
+  .cta { background:#4f46e5; color:#fff; text-align:center; padding:80px 50px; border-radius:50px 50px 0 0; opacity:0; transform:translateY(50px); }
+  .cta h2 { font-size:36px; margin-bottom:30px; }
+  .cta button { padding:18px 40px; background:#fff; color:#4f46e5; border:none; border-radius:10px; font-size:18px; font-weight:600; cursor:pointer; box-shadow:0 5px 20px rgba(0,0,0,0.2); }
+  .cta button:hover { background:#e0e7ff; transform:translateY(-3px); }
+
+  /* Footer */
+  footer { text-align:center; padding:30px; font-size:14px; color:#888; }
+
+  /* Animations on scroll */
+  .show { opacity:1 !important; transform:translateY(0) !important; }
+
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- Topbar -->
+<header>
+  <div class="logo">HospedAI</div>
+  <nav>
+    <a href="#">Home</a>
+    <a href="#">Funcionalidades</a>
+    <a href="#">Preços</a>
+    <a href="#">Sobre</a>
+    <a href="#">Contato</a>
+    <span class="dark-toggle" onclick="toggleDark()">🌙</span>
+  </nav>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>HospedAI: Inteligência Artificial para Hotéis</h1>
+    <p>Otimize reservas, automatize processos e surpreenda seus hóspedes com tecnologia de ponta.</p>
+    <button>Comece Agora</button>
+  </div>
+  <div class="hero-image">
+    <div id="dashboard">Dashboard IA</div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="feature-card"><h3>Reservas Inteligentes</h3><p>Sugestões automáticas de quartos e pacotes baseadas em perfil do hóspede.</p></div>
+  <div class="feature-card"><h3>Precificação Dinâmica</h3><p>Ajuste de preços em tempo real baseado em demanda e histórico de reservas.</p></div>
+  <div class="feature-card"><h3>Assistente Virtual 24/7</h3><p>Chatbot e concierge inteligente para atender hóspedes a qualquer hora.</p></div>
+  <div class="feature-card"><h3>Gestão Operacional</h3><p>Automatize limpeza, manutenção e controle de estoque com IA.</p></div>
+  <div class="feature-card"><h3>Relatórios & Insights</h3><p>Dashboards preditivos e análises avançadas para decisões estratégicas.</p></div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>Leve seu hotel para o futuro com HospedAI</h2>
+  <button>Teste Gratuitamente</button>
+</section>
+
+<!-- Footer -->
+<footer>© 2025 HospedAI - Todos os direitos reservados.</footer>
+
+<script>
+  // Dark mode toggle
+  function toggleDark(){ document.body.classList.toggle('light'); }
+
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('show'); });
+  }, { threshold:0.2 });
+  document.querySelectorAll('.hero-text, .hero-image, .feature-card, .cta').forEach(el=>observer.observe(el));
+
+  // Particles Background
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const particles = [];
+  for(let i=0;i<100;i++){
+    particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2+1,speedX:(Math.random()-0.5)/2,speedY:(Math.random()-0.5)/2});
+  }
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let p of particles){
+      p.x+=p.speedX; p.y+=p.speedY;
+      if(p.x>canvas.width)p.x=0;if(p.x<0)p.x=canvas.width;
+      if(p.y>canvas.height)p.y=0;if(p.y<0)p.y=canvas.height;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(79,70,229,0.7)';ctx.fill();ctx.closePath();
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+  window.addEventListener('resize',()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,283 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}HospedAI - Criar Novo Quarto{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f4f6fa, #e9edf5);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .form-card {
+        max-width: 780px;
+        margin: 60px auto;
+        padding: 45px 35px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        border-top: 5px solid #0d6efd;
+        transition: all 0.3s ease;
+    }
+
+    .form-card h3 {
+        text-align: center;
+        color: #0d6efd;
+        margin-bottom: 30px;
+        font-weight: 700;
+    }
+
+    .form-section {
+        margin-bottom: 25px;
+    }
+
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #0d6efd;
+        margin-bottom: 8px;
+    }
+
+    .form-section-title img {
+        width: 28px;
+        height: 28px;
+        margin-right: 10px;
+    }
+
+    .collapse-content {
+        display: none;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .drag-drop {
+        border: 2px dashed #0d6efd;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        color: #0d6efd;
+        cursor: pointer;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    .drag-drop.dragover {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    #previewImagens img {
+        height: 90px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        transition: transform 0.2s;
+    }
+
+    #previewImagens img:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 14px;
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+
+    .feedback {
+        font-size: 0.9rem;
+        margin-top: 4px;
+        transition: all 0.3s;
+        opacity: 0;
+        height: 0;
+    }
+
+    .feedback.show {
+        opacity: 1;
+        height: auto;
+    }
+
+    .feedback.success {
+        color: #198754;
+    }
+
+    .feedback.error {
+        color: #dc3545;
+    }
+
+    .toggle-icon {
+        margin-left: auto;
+        transition: transform 0.3s;
+    }
+
+    .toggle-icon.open {
+        transform: rotate(180deg);
+    }
+
+</style>
+
+<div class="form-card">
+    <h3>Criar Novo Quarto</h3>
+    <form method="post" enctype="multipart/form-data" id="quartoForm">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- 1. Número do Quarto -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <img src="{% static 'icons/number.png' %}" alt="Número"> Número do Quarto
+            </div>
+            {{ form.numero }}
+            <div class="feedback" id="feedback-numero"></div>
+        </div>
+
+        <!-- 2. Tipo de Quarto -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <img src="{% static 'icons/door.png' %}" alt="Tipo"> Tipo de Quarto
+            </div>
+            {{ form.tipo }}
+            <div class="feedback" id="feedback-tipo"></div>
+        </div>
+
+        <!-- 3. Capacidade -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <img src="{% static 'icons/people.png' %}" alt="Capacidade"> Capacidade de hóspedes
+            </div>
+            {{ form.capacidade }}
+            <div class="feedback" id="feedback-capacidade"></div>
+        </div>
+
+        <!-- 4. Tarifa -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <img src="{% static 'icons/money.png' %}" alt="Tarifa"> Tarifa (R$)
+            </div>
+            {{ form.tarifa }}
+            <div class="feedback" id="feedback-tarifa"></div>
+        </div>
+
+        <!-- 5. Ativo -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <img src="{% static 'icons/check.png' %}" alt="Ativo"> Ativo?
+            </div>
+            <div class="form-check form-switch">
+                {{ form.ativo }}
+                <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                    Quarto disponível para reservas
+                </label>
+            </div>
+        </div>
+
+        <!-- 6. Serviços (Colapsável) -->
+        <div class="form-section">
+            <div class="form-section-title" onclick="toggleCollapse('servicosContent', this)">
+                <img src="{% static 'icons/services.png' %}" alt="Serviços"> Serviços disponíveis
+                <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+            <div id="servicosContent" class="collapse-content">
+                {{ form.servicos }}
+            </div>
+        </div>
+
+        <!-- 7. Imagens (Colapsável + Drag & Drop) -->
+        <div class="form-section">
+            <div class="form-section-title" onclick="toggleCollapse('imagensContent', this)">
+                <img src="{% static 'icons/images.png' %}" alt="Imagens"> Imagens do Quarto
+                <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+            <div id="imagensContent" class="collapse-content">
+                <div id="dragDropArea" class="drag-drop">Arraste e solte as imagens aqui ou clique para selecionar</div>
+                <input type="file" name="fotos" class="form-control d-none" multiple id="fotosInput">
+                <div class="mt-3 d-flex flex-wrap gap-2" id="previewImagens"></div>
+            </div>
+        </div>
+
+        <!-- Botão -->
+        <div class="form-section mt-4">
+            <button type="submit" class="btn btn-primary">Salvar Quarto</button>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<script>
+function toggleCollapse(id, el) {
+    const content = document.getElementById(id);
+    const icon = el.querySelector('.toggle-icon');
+    if(content.style.display === 'block'){
+        content.style.display = 'none';
+        icon.classList.remove('open');
+    } else {
+        content.style.display = 'block';
+        icon.classList.add('open');
+    }
+}
+
+// Drag & Drop
+const dragDropArea = document.getElementById('dragDropArea');
+const fotosInput = document.getElementById('fotosInput');
+const preview = document.getElementById('previewImagens');
+
+dragDropArea.addEventListener('click', () => fotosInput.click());
+dragDropArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    dragDropArea.classList.add('dragover');
+});
+dragDropArea.addEventListener('dragleave', e => {
+    e.preventDefault();
+    dragDropArea.classList.remove('dragover');
+});
+dragDropArea.addEventListener('drop', e => {
+    e.preventDefault();
+    dragDropArea.classList.remove('dragover');
+    fotosInput.files = e.dataTransfer.files;
+    previewFiles(e.dataTransfer.files);
+});
+
+fotosInput.addEventListener('change', e => previewFiles(fotosInput.files));
+
+function previewFiles(files) {
+    preview.innerHTML = '';
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Validação visual simples
+const form = document.getElementById('quartoForm');
+form.addEventListener('submit', e => {
+    let valid = true;
+    Array.from(form.elements).forEach(input => {
+        const feedback = document.getElementById('feedback-' + input.name);
+        if(input.required && !input.value){
+            input.classList.add('is-invalid');
+            if(feedback) {
+                feedback.textContent = 'Campo obrigatório';
+                feedback.classList.add('show','error');
+            }
+            valid = false;
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            if(feedback) {
+                feedback.textContent = 'Campo preenchido com sucesso';
+                feedback.classList.add('show','success');
+            }
+        }
+    });
+    if(!valid) e.preventDefault();
+});
+</script>
+{% endblock %}

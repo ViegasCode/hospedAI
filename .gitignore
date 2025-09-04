@@ -1,0 +1,29 @@
+# Virtualenv / IDE
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Django
+db.sqlite3
+/media/
+staticfiles/
+local_settings.py
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

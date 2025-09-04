@@ -1,0 +1,36 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>HospedAI - Dashboard</title>
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+<div class="topbar">
+  HospedAI
+  <nav>
+    <a href="#">Dashboard</a>
+    <a href="#">Reservas</a>
+    <a href="#">Relatórios</a>
+    <a href="#">Configurações</a>
+  </nav>
+</div>
+
+<h2>Filtrar por Datas</h2>
+<div class="filter-dates">
+  <input type="date" id="checkinDate">
+  <input type="date" id="checkoutDate">
+  <button id="filterBtn">Filtrar</button>
+</div>
+
+<h2>Calendário Mensal</h2>
+<div class="calendar" id="calendar"></div>
+
+<h2>Dashboard do Dia</h2>
+<div class="dashboard" id="dashboard">
+  <div class="card"><h3>Quartos Livres</h3><span id="freeRooms">0</span></div>
+  <div class="card"><h3>Quartos Ocupados</h3><span id="occupiedRooms">0</span></div>
+  <div class="card

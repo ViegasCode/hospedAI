@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>HospedAI - Painel</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      color: #333;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: 22px;
+      color: #2c3e50;
+    }
+
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* Filtro */
+    .filter-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .filter-bar input {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    /* Calendário */
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+
+    .calendar .day {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      height: 85px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 4px;
+      position: relative;
+    }
+
+    .calendar .day .date {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    .calendar .day .availability {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .calendar-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    /* Dashboard */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .dashboard .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: bold;
+      color: #2c3e50;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* Kanban */
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .kanban .column {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .kanban .column h3 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .kanban .card {
+      background: #f4f6f8;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Calendário -->
+  <div class="section">
+    <h2>📅 Calendário Mensal</h2>
+    <div class="filter-bar">
+      <input type="date" placeholder="Check-in">
+      <input type="date" placeholder="Check-out">
+    </div>
+    <div class="calendar-header">
+      <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    </div>
+    <div class="calendar">
+      <!-- Exemplo de mês com 5 semanas -->
+      <div class="day"><div class="date">1</div><div class="availability">12/16</div></div>
+      <div class="day"><div class="date">2</div><div class="availability">14/16</div></div>
+      <div class="day"><div class="date">3</div><div class="availability">10/16</div></div>
+      <div class="day"><div class="date">4</div><div class="availability">9/16</div></div>
+      <div class="day"><div class="date">5</div><div class="availability">11/16</div></div>
+      <div class="day"><div class="date">6</div><div class="availability">15/16</div></div>
+      <div class="day"><div class="date">7</div><div class="availability">16/16</div></div>
+      <div class="day"><div class="date">8</div><div class="availability">12/16</div></div>
+      <div class="day"><div class="date">9</div><div class="availability">13/16</div></div>
+      <div class="day"><div class="date">10</div><div class="availability">11/16</div></div>
+      <div class="day"><div class="date">11</div><div class="availability">8/16</div></div>
+      <div class="day"><div class="date">12</div><div class="availability">10/16</div></div>
+      <div class="day"><div class="date">13</div><div class="availability">14/16</div></div>
+      <div class="day"><div class="date">14</div><div class="availability">15/16</div></div>
+      <div class="day"><div class="date">15</div><div class="availability">9/16</div></div>
+      <div class="day"><div class="date">16</div><div class="availability">11/16</div></div>
+      <div class="day"><div class="date">17</div><div class="availability">12/16</div></div>
+      <div class="day"><div class="date">18</div><div class="availability">13/16</div></div>
+      <div class="day"><div class="date">19</div><div class="availability">10/16</div></div>
+      <div class="day"><div class="date">20</div><div class="availability">14/16</div></div>
+      <div class="day"><div class="date">21</div><div class="availability">15/16</div></div>
+      <div class="day"><div class="date">22</div><div class="availability">9/16</div></div>
+      <div class="day"><div class="date">23</div><div class="availability">10/16</div></div>
+      <div class="day"><div class="date">24</div><div class="availability">12/16</div></div>
+      <div class="day"><div class="date">25</div><div class="availability">13/16</div></div>
+      <div class="day"><div class="date">26</div><div class="availability">14/16</div></div>
+      <div class="day"><div class="date">27</div><div class="availability">11/16</div></div>
+      <div class="day"><div class="date">28</div><div class="availability">15/16</div></div>
+      <div class="day"><div class="date">29</div><div class="availability">12/16</div></div>
+      <div class="day"><div class="date">30</div><div class="availability">14/16</div></div>
+      <div class="day"><div class="date">31</div><div class="availability">16/16</div></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="section">
+    <h2>📊 Dashboard</h2>
+    <div class="dashboard">
+      <div class="card">Taxa de Ocupação<br>78%</div>
+      <div class="card">Check-ins Hoje<br>12</div>
+      <div class="card">Check-outs Hoje<br>8</div>
+      <div class="card">Quartos Disponíveis<br>14</div>
+    </div>
+  </div>
+
+  <!-- Kanban -->
+  <div class="section">
+    <h2>📌 Kanban de Reservas</h2>
+    <div class="kanban">
+      <div class="column">
+        <h3>Pendentes</h3>
+        <div class="card">João - 28/08</div>
+        <div class="card">Maria - 29/08</div>
+      </div>
+      <div class="column">
+        <h3>Ativas</h3>
+        <div class="card">Douglas - 27/08 a 30/08</div>
+      </div>
+      <div class="column">
+        <h3>Finalizadas</h3>
+        <div class="card">Ana - 20/08 a 25/08</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

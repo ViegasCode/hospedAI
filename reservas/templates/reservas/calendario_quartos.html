@@ -1,0 +1,99 @@
+{% extends "core/base.html" %}
+
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Calendário de Reservas - HospedAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <style>
+    /* Fundo igual ao login */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url("{% static 'reservas/img/site_bg.png' %}") repeat;
+      background-color: #ffffff;
+    }
+
+    /* Container centralizado */
+    .calendar-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    /* Cabeçalho */
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      color: #1e3a8a;
+    }
+    h1 span {
+      color: #1e3a8a;
+    }
+
+    /* Estilo do calendário */
+    .fc {
+      --fc-border-color: #ddd;
+      --fc-event-border-color: transparent;
+      --fc-today-bg-color: #e8f1fb; /* azul clarinho */
+      --fc-button-bg-color: #5A98D7;
+      --fc-button-border-color: #5A98D7;
+      --fc-button-hover-bg-color: #293F74;
+      --fc-button-hover-border-color: #293F74;
+      --fc-button-active-bg-color: #293F74;
+      --fc-button-active-border-color: #293F74;
+    }
+
+    .fc-toolbar-title {
+      color: #293F74;
+      font-weight: bold;
+    }
+
+    /* Eventos */
+    .fc-event {
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="calendar-container">
+    <h1>Calendário de <span>Reservas</span></h1>
+    <div id="calendar"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        height: 'auto',
+        events: '/api/reservas/',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }
+      });
+
+      calendar.render();
+    });
+  </script>
+</body>
+</html>
+{% endblock %}

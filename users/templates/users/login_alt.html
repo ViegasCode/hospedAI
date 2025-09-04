@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - HospedAI</title>
+    {% load static %}
+<style>
+/* Body com background do site */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: url("{% static 'reservas/img/site_bg.png' %}") repeat; /* background do site */
+    background-color: #ffffff; /* fallback */
+}
+
+/* Container do login centralizado */
+.login-container {
+    display: flex;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 80vh;
+    background-color: #fff; /* painel branco do login */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative; /* garante que fique acima do body */
+    z-index: 1;
+}
+
+/* Lado da imagem do login */
+.login-image {
+    flex: 1;
+    background: url("{% static 'reservas/img/login_bg.png' %}") no-repeat center center;
+    background-size: cover;
+}
+
+/* Lado do formulário */
+.login-form {
+    flex: 1;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Inputs e botões básicos */
+.login-form input {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-form button {
+    padding: 0.8rem;
+    background-color: #5A98D6;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.login-form button:hover {
+    background-color: #194075;
+}
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-image"></div>
+        <div class="login-form">
+            <h1>Hosped<span style="color:#6E94D4;">AI</span></h1>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Usuário" required>
+                <input type="password" name="password" placeholder="Senha" required>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

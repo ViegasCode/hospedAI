@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Quartos</title>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9f9fb;
+    margin: 0;
+    padding: 20px;
+    color: #111;
+  }
+
+  h2 {
+    margin-top: 40px;
+    margin-bottom: 10px;
+  }
+
+  .timeline, .dashboard, .kanban {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow-x: auto;
+  }
+
+  /* Linha de datas */
+  .dates-row {
+    display: flex;
+    margin-bottom: 10px;
+  }
+
+  .dates-cell {
+    width: 80px;
+    text-align: center;
+    font-weight: bold;
+    padding: 5px 0;
+    background-color: #f3f4f6;
+    border-radius: 6px;
+    margin-right: 5px;
+    flex-shrink: 0;
+  }
+
+  /* Linhas de quartos */
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .timeline-label {
+    width: 100px;
+    margin-right: 10px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .timeline-bar-container {
+    position: relative;
+    flex-grow: 1;
+    height: 30px;
+    background-color: #e5e7eb;
+    border-radius: 6px;
+  }
+
+  .timeline-bar {
+    position: absolute;
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .green { background-color: #4ade80; }
+  .yellow { background-color: #facc15; }
+  .red { background-color: #ef4444; }
+
+  /* Dashboard resumido */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+  }
+
+  .dashboard-card {
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .dashboard-card h3 {
+    margin: 0;
+    font-size: 24px;
+  }
+
+  .dashboard-list {
+    margin-top: 10px;
+  }
+
+  .dashboard-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+
+  .status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .status.confirmed { background-color: #4ade80; }
+  .status.pending { background-color: #facc15; }
+  .status.checkin { background-color: #ef4444; }
+
+  /* Kanban */
+  .kanban-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .kanban-column {
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    padding: 15px;
+  }
+
+  .kanban-column h4 {
+    margin-top: 0;
+  }
+
+  .kanban-item {
+    background-color: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+</style>
+</head>
+<body>
+
+<h2>Timeline de Quartos</h2>
+<div class="timeline">
+  <div class="dates-row">
+    <div class="dates-cell"></div>
+    <div class="dates-cell">01/09</div>
+    <div class="dates-cell">02/09</div>
+    <div class="dates-cell">03/09</div>
+    <div class="dates-cell">04/09</div>
+    <div class="dates-cell">05/09</div>
+    <div class="dates-cell">06/09</div>
+  </div>
+
+  <div class="timeline-row">
+    <div class="timeline-label">Quarto 1</div>
+    <div class="timeline-bar-container">
+      <div class="timeline-bar green" style="left:0%; width:30%;">01-03</div>
+    </div>
+  </div>
+
+  <div class="timeline-row">
+    <div class="timeline-label">Quarto 2</div>
+    <div class="timeline-bar-container">
+      <div class="timeline-bar yellow" style="left:10%; width:40%;">02-06</div>
+    </div>
+  </div>
+
+  <div class="timeline-row">
+    <div class="timeline-label">Quarto 3</div>
+    <div class="timeline-bar-container">
+      <div class="timeline-bar red" style="left:20%; width:25%;">03-05</div>
+    </div>
+  </div>
+
+  <div class="timeline-row">
+    <div class="timeline-label">Quarto 4</div>
+    <div class="timeline-bar-container">
+      <div class="timeline-bar green" style="left:0%; width:15%;">01-02</div>
+    </div>
+  </div>
+</div>
+
+<h2>Dashboard Resumido</h2>
+<div class="dashboard">
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <p>Quartos livres</p>
+      <h3>4</h3>
+    </div>
+    <div class="dashboard-card">
+      <p>Quartos ocupados</p>
+      <h3>10</h3>
+    </div>
+    <div class="dashboard-card">
+      <p>Check-ins hoje</p>
+      <h3>3</h3>
+    </div>
+    <div class="dashboard-card">
+      <p>Check-outs hoje</p>
+      <h3>2</h3>
+    </div>
+  </div>
+  <div class="dashboard-list">
+    <div class="dashboard-list-item"><span class="status confirmed"></span> João Silva - Confirmada</div>
+    <div class="dashboard-list-item"><span class="status pending"></span> Maria Costa - Pendente</div>
+    <div class="dashboard-list-item"><span class="status checkin"></span> Pedro Lima - Check-in hoje</div>
+    <div class="dashboard-list-item"><span class="status confirmed"></span> Ana Souza - Confirmada</div>
+  </div>
+</div>
+
+<h2>Kanban de Quartos</h2>
+<div class="kanban">
+  <div class="kanban-grid">
+    <div class="kanban-column">
+      <h4>Livre</h4>
+      <div class="kanban-item">5</div>
+      <div class="kanban-item">8</div>
+      <div class="kanban-item">10</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Ocupado</h4>
+      <div class="kanban-item">1 João Silva</div>
+      <div class="kanban-item">2 Ana Souza</div>
+      <div class="kanban-item">3 Fernanda Alves</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Pendente</h4>
+      <div class="kanban-item">2 Maria Costa</div>
+      <div class="kanban-item">4 Carlos Rocha</div>
+    </div>
+    <div class="kanban-column">
+      <h4>Check-out Hoje</h4>
+      <div class="kanban-item">3 Pedro Lima</div>
+      <div class="kanban-item">7 Luiza Almeida</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
