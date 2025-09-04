@@ -19,14 +19,17 @@ from django.urls import path, include
 from core import views
 from django.conf.urls.static import static
 from django.conf import settings
+from django.http import HttpResponse  # <- add
+
+def ping(request):                     # <- add (view mínima)
+    return HttpResponse("HospedAI OK 🚀")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home/', views.home, name='home'),
-    path('', include('users.urls')),
-    path('', include('reservas.urls')),
-    path('', include('quartos.urls')),
+    path('', ping, name='home'),       # <- raiz responde algo simples
+    path('users/', include('users.urls')),
+    path('reservas/', include('reservas.urls')),
+    path('quartos/', include('quartos.urls')),
 ]
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
