@@ -4,10 +4,18 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-27slc9p37z9t27^22eotl_2(r*83sgn)o#4_d1buvntdsqm@6e'
-DEBUG = True
 
-ALLOWED_HOSTS = ["<seu_usuario>.pythonanywhere.com"]
-CSRF_TRUSTED_ORIGINS = ["https://<seu_usuario>.pythonanywhere.com"]
+DEBUG = False
+
+ALLOWED_HOSTS = [
+    "viegascoding.pythonanywhere.com",
+    "127.0.0.1",
+    "localhost",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://viegascoding.pythonanywhere.com",
+]
 
 
 INSTALLED_APPS = [
