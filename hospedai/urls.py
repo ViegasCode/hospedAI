@@ -23,9 +23,9 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', views.home, name='home'),
-    path('users/', include('users.urls')),
-    path('reservas/', include('reservas.urls')),
-    path('quartos/', include('quartos.urls')),
+    path('', include('users.urls')),
+    path('', include('reservas.urls')),
+    path('', include('quartos.urls')),
 ]
 
 if settings.DEBUG:
