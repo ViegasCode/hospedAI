@@ -2,48 +2,47 @@
 from django.shortcuts import render
 from django.utils.timezone import now
 
-try:
-    from quartos.models import Quarto
-    from reservas.models import Reserva
-except Exception:
-    # Se quiser rodar sem apps por um momento
-    Quarto = None
-    Reserva = None
+# core/views.py
+from django.shortcuts import render
+from django.apps import apps
+from django.utils import timezone
 
 def home(request):
-    hoje = now().date()
+    # Carrega os models de forma segura (evita import circular / None)
+    Reserva = apps.get_model('reservas', 'Reserva')
+    Quarto = apps.get_model('quartos', 'Quarto')
 
-    total_quartos = Quarto.objects.filter(ativo=True).count() if Quarto else 0
+    # Se por algum motivo não encontrou, mostra fallback amigável
+    if Reserva is None or Quarto is None:
+        return render(request, 'core/home.html', {
+            'ultimas_reservas': [],
+            'stats': {'total_quartos': 0, 'ocupados_hoje': 0, 'livres_hoje': 0},
+            'hoje': timezone.now().date(),
+        })
 
-    reservas_ativas_hoje = Reserva.objects.filter(
+    hoje = timezone.now().date()
+
+    # Estatísticas simples
+    total_quartos = Quarto.objects.filter(ativo=True).count()
+    ocupados_hoje = Reserva.objects.filter(
         data_entrada__date__lte=hoje,
-        data_saida__date__gt=hoje,
-        status__in=["pendente", "confirmada"]
-    ).select_related("quarto") if Reserva else []
-
-    ocupados_hoje = reservas_ativas_hoje.count() if Reserva else 0
+        data_saida__date__gte=hoje,
+        status__in=['pendente', 'confirmada'],
+    ).count()
     livres_hoje = max(total_quartos - ocupados_hoje, 0)
 
-    checkins_hoje = Reserva.objects.filter(
-        data_entrada__date=hoje,
-        status__in=["pendente", "confirmada"]
-    ).count() if Reserva else 0
+    # Últimas reservas (ordena por id para não depender de campo de criação)
+    ultimas = (Reserva.objects
+               .select_related('quarto')
+               .order_by('-id')[:5])
 
-    checkouts_hoje = Reserva.objects.filter(
-        data_saida__date=hoje,
-        status__in=["pendente", "confirmada"]
-    ).count() if Reserva else 0
-
-    ultimas_reservas = Reserva.objects.select_related("quarto").order_by("-data_entrada")[:5]
-
-    contexto = {
-        "total_quartos": total_quartos,
-        "ocupados_hoje": ocupados_hoje,
-        "livres_hoje": livres_hoje,
-        "checkins_hoje": checkins_hoje,
-        "checkouts_hoje": checkouts_hoje,
-        "tem_quartos": total_quartos > 0,
-        "tem_reservas_hoje": ocupados_hoje > 0 or checkins_hoje > 0 or checkouts_hoje > 0,
-        "ultimas_reservas": ultimas_reservas,
+    context = {
+        'ultimas_reservas': ultimas,
+        'stats': {
+            'total_quartos': total_quartos,
+            'ocupados_hoje': ocupados_hoje,
+            'livres_hoje': livres_hoje,
+        },
+        'hoje': hoje,
     }
-    return render(request, "core/home.html", contexto)
+    return render(request, 'core/home.html', context)
