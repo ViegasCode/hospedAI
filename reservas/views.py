@@ -186,61 +186,83 @@ def reservas_json(request):
         })
 
     return JsonResponse(events, safe=False)
+# reservas/views.py (apenas os trechos relevantes)
+from datetime import datetime, date, time, timedelta
+from django.utils import timezone
+from django.utils.timezone import make_aware
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from quartos.models import Quarto
+from reservas.models import Reserva
+
+STATUS_CONSIDERADOS = ["pendente", "confirmada"]
+
+def intervalo_do_dia(d):
+    tz = timezone.get_current_timezone()
+    inicio = make_aware(datetime.combine(d, time.min), tz)
+    fim = make_aware(datetime.combine(d, time.max), tz)
+    return inicio, fim
 
 @api_view(["GET"])
 def calendario_dashboard(request):
-    """
-    Retorna dados de ocupação por dia + dashboard diário
-    """
     data_entrada = request.GET.get("data_entrada")
     data_saida = request.GET.get("data_saida")
-
     if not data_entrada or not data_saida:
         return Response({"error": "Forneça data_entrada e data_saida"}, status=400)
 
-    # Quartos
-    total_quartos = Quarto.objects.count()
-
-    # Reservas nesse período
-    reservas = Reserva.objects.filter(
-        data_saida__gte=data_entrada,
-        data_entrada__lte=data_saida,
-        status__in=["pendente", "confirmada"]
-    )
-
-    # Disponibilidade por dia
-    from datetime import date, timedelta
     d1 = date.fromisoformat(data_entrada)
     d2 = date.fromisoformat(data_saida)
-    dias = (d2 - d1).days + 1
+
+    total_quartos = Quarto.objects.filter(ativo=True).count()
 
     calendario = []
-    for i in range(dias):
-        dia = d1 + timedelta(days=i)
-        ocupados = reservas.filter(data_entrada__lte=dia, data_saida__gte=dia).count()
-        livres = total_quartos - ocupados
+    dia = d1
+    while dia <= d2:
+        ini, fim = intervalo_do_dia(dia)
+        reservas_overlap = Reserva.objects.filter(
+            status__in=STATUS_CONSIDERADOS,
+            data_entrada__lte=fim,
+            data_saida__gte=ini,
+        )
+        ocupados = reservas_overlap.values("quarto_id").distinct().count()
+        livres = max(total_quartos - ocupados, 0)
         calendario.append({
             "day": dia.day,
             "date": dia.isoformat(),
             "free": livres,
             "occupied": ocupados,
         })
+        dia += timedelta(days=1)
 
-    # Dashboard do dia atual
-    hoje = now().date()
-    checkins = reservas.filter(data_entrada=hoje).count()
-    checkouts = reservas.filter(data_saida=hoje).count()
+    # Dashboard do dia atual — mesma regra!
+    hoje = timezone.localdate()
+    ini_h, fim_h = intervalo_do_dia(hoje)
+    reservas_hoje = Reserva.objects.filter(
+        status__in=STATUS_CONSIDERADOS,
+        data_entrada__lte=fim_h,
+        data_saida__gte=ini_h,
+    )
+    ocupados_hoje = reservas_hoje.values("quarto_id").distinct().count()
+    checkins = Reserva.objects.filter(
+        status__in=STATUS_CONSIDERADOS,
+        data_entrada__gte=ini_h, data_entrada__lte=fim_h
+    ).count()
+    checkouts = Reserva.objects.filter(
+        status__in=STATUS_CONSIDERADOS,
+        data_saida__gte=ini_h, data_saida__lte=fim_h
+    ).count()
 
     return Response({
         "total_quartos": total_quartos,
         "calendario": calendario,
         "dashboard": {
-            "livres": total_quartos - reservas.filter(data_entrada__lte=hoje, data_saida__gte=hoje).count(),
-            "ocupados": reservas.filter(data_entrada__lte=hoje, data_saida__gte=hoje).count(),
+            "livres": max(total_quartos - ocupados_hoje, 0),
+            "ocupados": ocupados_hoje,
             "checkins": checkins,
             "checkouts": checkouts,
         },
     })
+
 
 def calendario_quarto2(request):
     return render(request, "reservas/calendario_quarto2.html")
