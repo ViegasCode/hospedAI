@@ -366,3 +366,133 @@ def dashboard_api(request):
     }
 
     return JsonResponse(data)
+
+
+# reservas/views.py
+from datetime import date, timedelta
+from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+from django.utils.timezone import now
+from quartos.models import Quarto
+from .models import Reserva
+
+def calendario_api(request):
+    """
+    JSON: disponibilidade diária no intervalo [data_entrada, data_saida]
+    Cada item: {"day": 12, "date": "2025-09-12", "free": 3}
+    E também um dashboard simples do dia de hoje.
+    """
+    di = parse_date(request.GET.get('data_entrada'))
+    ds = parse_date(request.GET.get('data_saida'))
+
+    # defaults: mês corrente se não vier filtro
+    hoje = date.today()
+    if not di:
+        di = hoje.replace(day=1)
+    if not ds:
+        # último dia do mês de di
+        first_next_month = (di.replace(day=28) + timedelta(days=4)).replace(day=1)
+        ds = first_next_month - timedelta(days=1)
+
+    total_quartos = Quarto.objects.filter(ativo=True).count()
+
+    calendario = []
+    d = di
+    while d <= ds:
+        # reservas que pegam o dia d (comparando só a data)
+        ocupados_qs = Reserva.objects.filter(
+            status__in=['pendente', 'confirmada'],
+            data_entrada__date__lte=d,
+            data_saida__date__gt=d
+        ).values_list('quarto_id', flat=True).distinct()
+
+        ocupados = len(set(ocupados_qs))
+        livres = max(total_quartos - ocupados, 0)
+
+        calendario.append({
+            "day": d.day,
+            "date": d.isoformat(),
+            "free": livres,
+        })
+        d += timedelta(days=1)
+
+    # Dashboard de hoje
+    hoje_d = now().date()
+    ocupados_hoje = Reserva.objects.filter(
+        status__in=['pendente', 'confirmada'],
+        data_entrada__date__lte=hoje_d,
+        data_saida__date__gt=hoje_d
+    ).values_list('quarto_id', flat=True).distinct()
+    ocupados_hoje_ct = len(set(ocupados_hoje))
+    livres_hoje_ct = max(total_quartos - ocupados_hoje_ct, 0)
+
+    checkins_hoje = Reserva.objects.filter(
+        status__in=['pendente', 'confirmada'],
+        data_entrada__date=hoje_d
+    ).count()
+    checkouts_hoje = Reserva.objects.filter(
+        status__in=['pendente', 'confirmada'],
+        data_saida__date=hoje_d
+    ).count()
+
+    return JsonResponse({
+        "total_quartos": total_quartos,
+        "calendario": calendario,
+        "dashboard": {
+            "livres": livres_hoje_ct,
+            "ocupados": ocupados_hoje_ct,
+            "checkins": checkins_hoje,
+            "checkouts": checkouts_hoje
+        }
+    })
+
+from django.http import JsonResponse
+from django.utils.timezone import make_aware
+from datetime import datetime
+from reservas.models import Reserva
+from quartos.models import Quarto
+
+def detalhes_dia(request):
+    """
+    Retorna listas para as três colunas (livres, ocupados, check-ins) de um dia específico.
+    GET ?dia=YYYY-MM-DD
+    """
+    dia = request.GET.get("dia")
+    if not dia:
+        return JsonResponse({"error": "Informe ?dia=YYYY-MM-DD"}, status=400)
+
+    start = make_aware(datetime.fromisoformat(dia + "T00:00:00"))
+    end   = make_aware(datetime.fromisoformat(dia + "T23:59:59"))
+
+    reservas_dia = Reserva.objects.filter(
+        status__in=["pendente", "confirmada"],
+        data_entrada__lte=end,
+        data_saida__gte=start
+    ).select_related("quarto")
+
+    ocupados = [
+        {
+            "room": f"{r.quarto.tipo} {r.quarto.numero}",
+            "checkout": r.data_saida.strftime("%d/%m"),
+            "cliente": r.nome_cliente,
+        }
+        for r in reservas_dia
+    ]
+
+    livres_qs = Quarto.objects.filter(ativo=True).exclude(
+        id__in=reservas_dia.values_list("quarto_id", flat=True)
+    )
+    livres = [{"room": f"{q.tipo} {q.numero}", "checkout": "-"} for q in livres_qs]
+
+    checkins = [
+        {
+            "room": f"{r.quarto.tipo} {r.quarto.numero}",
+            "checkout": r.data_saida.strftime("%d/%m"),
+            "cliente": r.nome_cliente,
+        }
+        for r in Reserva.objects.filter(
+            status__in=["pendente", "confirmada"], data_entrada__date=start.date()
+        ).select_related("quarto")
+    ]
+
+    return JsonResponse({"free": livres, "occupied": ocupados, "checkins": checkins})

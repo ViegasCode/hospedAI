@@ -20,11 +20,16 @@ from core import views
 from django.conf.urls.static import static
 from django.conf import settings
 from django.http import HttpResponse  # <- add
+from core import views as core_views
 
 def ping(request):                     # <- add (view mínima)
     return HttpResponse("HospedAI OK 🚀")
 
 urlpatterns = [
+
+    # HOME
+    path('', core_views.home, name='home'),
+
     path('admin/', admin.site.urls),
     path('', ping, name='home'),       # <- raiz responde algo simples
     path('users/', include('users.urls')),

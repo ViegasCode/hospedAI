@@ -1,0 +1,140 @@
+:root{
+  --brand:#4f46e5;
+  --brand-100:#eef2ff;
+  --ink:#111827;
+  --muted:#6b7280;
+  --panel:#ffffff;
+  --border:#e5e7eb;
+  --shadow:0 6px 18px rgba(0,0,0,.10);
+}
+
+.hero{
+  display:grid; grid-template-columns: 1.2fr .8fr; gap:24px; align-items:center;
+  background: linear-gradient(135deg, #fff, #f7f8ff);
+  border-radius:16px; padding:24px; box-shadow:var(--shadow); margin-bottom:18px;
+}
+.hero__text h1{ font-size:2rem; line-height:1.2; margin:0 0 8px 0; color:var(--ink); }
+.hero__text h1 span{ color:var(--brand); }
+.hero__text p{ color:var(--muted); margin-bottom:14px; }
+.hero__cta{ display:flex; flex-wrap:wrap; gap:10px; }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:700;
+  border:1px solid transparent; transition:transform .15s ease, box-shadow .15s ease, background .2s ease;
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(79,70,229,.25); }
+.btn-primary{ background:var(--brand); color:#fff; }
+.btn-outline{ background:#fff; color:var(--brand); border-color:var(--brand-100); }
+.btn-ghost{ background:transparent; color:var(--brand); border-color:transparent; }
+
+.hero__illustration{
+  display:flex; align-items:center; justify-content:center;
+}
+.hero__illustration img{
+  max-width:220px; height:auto; filter: drop-shadow(0 8px 24px rgba(79,70,229,.25));
+}
+
+.kpis{
+  display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; margin-bottom:18px;
+}
+.kpi{
+  background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px;
+  text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.kpi__label{ color:var(--muted); font-size:.9rem; margin-bottom:6px; }
+.kpi__value{ color:var(--brand); font-weight:800; font-size:1.6rem; }
+
+.quick-actions{ margin-bottom:18px; }
+.quick-actions h2{ color:var(--brand); margin:0 0 10px 0; }
+.qa__grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+.qa__card{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px;
+  color:var(--ink); text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,.05);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
+}
+.qa__card:hover{ transform: translateY(-2px); box-shadow:0 10px 22px rgba(79,70,229,.15); border-color:#c7d2fe; }
+.qa__icon{ font-size:1.4rem; }
+.qa__title{ font-weight:800; margin:6px 0; color:var(--ink); }
+.qa__card p{ color:var(--muted); margin:0; }
+
+.onboarding .onb__card{
+  background: #fff; border:1px dashed #c7d2fe; border-radius:12px; padding:16px; margin-bottom:18px;
+}
+.onb__card h3{ margin:0 0 6px 0; color:var(--brand); }
+.onb__card ol{ margin: 6px 0 0 18px; }
+.onb__card a{ color:var(--brand); font-weight:700; text-decoration:none; }
+
+.promo .promo__card{
+  background: linear-gradient(135deg, #ffffff, #eef2ff);
+  border:1px solid var(--brand-100);
+  border-radius:12px; padding:18px; display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.promo__card h2{ color:var(--brand); margin:0 0 6px 0; }
+.promo__card p{ color:var(--muted); margin:0 0 8px 0; }
+
+@media (max-width: 1080px){
+  .hero{ grid-template-columns:1fr; text-align:center; }
+  .hero__illustration{ display:none; }
+  .kpis{ grid-template-columns: repeat(3, 1fr); }
+  .qa__grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px){
+  .kpis{ grid-template-columns: repeat(2, 1fr); }
+  .qa__grid{ grid-template-columns: 1fr; }
+}
+.recent-reservations{
+  margin: 20px 0;
+}
+.recent-reservations h2{
+  color: var(--brand);
+  margin-bottom: 10px;
+}
+.reserva-list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reserva-item{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.reserva-info{ font-weight: 600; color: var(--ink); }
+.reserva-dates{ font-size: .9rem; color: var(--muted); }
+.status{
+  font-size: .8rem;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.status.confirmada{ background: #d1fae5; color: #065f46; }
+.status.pendente{ background: #fef08a; color: #92400e; }
+.status.cancelada{ background: #fecaca; color: #991b1b; }
+.ver-todas{
+  text-align: right;
+  margin-top: 8px;
+}
+.btn-ver-todas{
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--brand);
+  transition: all 0.2s ease;
+}
+.btn-ver-todas:hover{
+  background: var(--brand);
+  color: #fff;
+}

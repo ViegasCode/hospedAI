@@ -1,133 +1,128 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HospedAI - Inteligência Artificial para Hotéis</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
-  body { background:#f4f6fa; color:#1a1a1a; scroll-behavior: smooth; }
+{% extends "core/base.html" %}
+{% load static %}
 
-  /* Dark Mode */
-  body.dark { background:#121212; color:#e0e0e0; }
-  body.dark header { background:#1f1f1f; }
-  body.dark .hero { background: linear-gradient(135deg, #2b2b2b, #3b3b3b); }
-  body.dark .feature-card { background:#1f1f1f; box-shadow:0 10px 25px rgba(255,255,255,0.05); }
-  body.dark .cta { background:#1a1a1a; }
+{% block title %}HospedAI — Painel{% endblock %}
 
-  /* Topbar */
-  header {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:20px 50px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,0.05);
-    position:sticky; top:0; z-index:100;
-  }
-  .logo { font-size:28px; font-weight:700; color:#4f46e5; }
-  nav a { margin-left:25px; text-decoration:none; color:#1a1a1a; font-weight:500; position:relative; }
-  nav a::after { content:''; position:absolute; width:0; height:2px; background:#4f46e5; bottom:-4px; left:0; transition:0.3s; }
-  nav a:hover::after { width:100%; }
-  nav a:hover { color:#4f46e5; }
-  .dark-toggle { margin-left:20px; cursor:pointer; font-weight:600; color:#4f46e5; }
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/css/home.css' %}">
 
-  /* Hero Section */
-  .hero { display:flex; align-items:center; justify-content:space-between; padding:100px 50px;
-          background:linear-gradient(135deg, #4f46e5, #3b82f6); color:#fff; border-radius:0 0 50px 50px; flex-wrap:wrap; }
-  .hero-text { max-width:600px; opacity:0; transform:translateY(50px); transition:0.8s; }
-  .hero-text h1 { font-size:48px; margin-bottom:20px; line-height:1.2; }
-  .hero-text p { font-size:20px; margin-bottom:30px; }
-  .hero-text button {
-    padding:15px 35px; background:#fff; color:#4f46e5; border:none; border-radius:10px;
-    font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; box-shadow:0 5px 15px rgba(0,0,0,0.1);
-  }
-  .hero-text button:hover { background:#e0e7ff; transform:translateY(-3px); }
-
-  .hero-image { opacity:0; transform:translateY(50px); transition:0.8s; }
-  .hero-image img { width:500px; border-radius:20px; box-shadow:0 15px 40px rgba(0,0,0,0.2); }
-
-  /* Features */
-  .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px; padding:80px 50px; }
-  .feature-card {
-    background:#fff; border-radius:20px; padding:40px 30px; text-align:center;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05); opacity:0; transform:translateY(50px); transition:0.8s;
-  }
-  .feature-card:hover { transform:translateY(-10px) scale(1.02); box-shadow:0 15px 30px rgba(0,0,0,0.1); }
-  .feature-card h3 { font-size:22px; margin-bottom:15px; color:#4f46e5; }
-  .feature-card p { font-size:16px; color:#555; }
-
-  /* CTA */
-  .cta { background:#4f46e5; color:#fff; text-align:center; padding:80px 50px; border-radius:50px 50px 0 0; opacity:0; transform:translateY(50px); }
-  .cta h2 { font-size:36px; margin-bottom:30px; }
-  .cta button {
-    padding:18px 40px; background:#fff; color:#4f46e5; border:none; border-radius:10px;
-    font-size:18px; font-weight:600; cursor:pointer; box-shadow:0 5px 20px rgba(0,0,0,0.15);
-  }
-  .cta button:hover { background:#e0e7ff; transform:translateY(-3px); }
-
-  /* Footer */
-  footer { text-align:center; padding:30px; font-size:14px; color:#777; }
-
-  /* Animations on scroll */
-  .show { opacity:1 !important; transform:translateY(0) !important; }
-</style>
-</head>
-<body>
-
-<!-- Topbar -->
-<header>
-  <div class="logo">HospedAI</div>
-  <nav>
-    <a href="#">Home</a>
-    <a href="#">Funcionalidades</a>
-    <a href="#">Preços</a>
-    <a href="#">Sobre</a>
-    <a href="#">Contato</a>
-    <span class="dark-toggle" onclick="toggleDark()">🌙</span>
-  </nav>
-</header>
-
-<!-- Hero -->
 <section class="hero">
-  <div class="hero-text">
-    <h1>HospedAI: Inteligência Artificial para Hotéis</h1>
-    <p>Otimize reservas, automatize processos e surpreenda seus hóspedes com tecnologia de ponta.</p>
-    <button>Comece Agora</button>
+  <div class="hero__text">
+    <h1>Bem-vindo ao <span>HospedAI</span></h1>
+    <p>Seu hub para gerenciar quartos, reservas e ocupação — rápido, bonito e no padrão premium.</p>
+
+    <div class="hero__cta">
+      <a href="{% url 'listar_quartos' %}" class="btn btn-primary">Ver Quartos</a>
+      <a href="{% url 'nova_reserva' %}" class="btn btn-outline">Criar Reserva</a>
+      <a href="{% url 'calendario_quarto2' %}" class="btn btn-ghost">Calendário</a>
+    </div>
   </div>
-  <div class="hero-image">
-    <img src="https://i.ibb.co/fnvVb5G/dashboard-placeholder.png" alt="Dashboard HospedAI">
+
+  <div class="hero__illustration">
+    <img src="{% static 'core/img/logo-black-removebg-preview.png' %}" alt="HospedAI">
   </div>
 </section>
 
-<!-- Features -->
-<section class="features">
-  <div class="feature-card"><h3>Reservas Inteligentes</h3><p>Sugestões automáticas de quartos e pacotes baseadas em perfil do hóspede.</p></div>
-  <div class="feature-card"><h3>Precificação Dinâmica</h3><p>Ajuste de preços em tempo real baseado em demanda e histórico de reservas.</p></div>
-  <div class="feature-card"><h3>Assistente Virtual 24/7</h3><p>Chatbot e concierge inteligente para atender hóspedes a qualquer hora.</p></div>
-  <div class="feature-card"><h3>Gestão Operacional</h3><p>Automatize limpeza, manutenção e controle de estoque com IA.</p></div>
-  <div class="feature-card"><h3>Relatórios & Insights</h3><p>Dashboards preditivos e análises avançadas para decisões estratégicas.</p></div>
+<section class="kpis">
+  <div class="kpi">
+    <div class="kpi__label">Quartos Ativos</div>
+    <div class="kpi__value">{{ total_quartos }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Ocupados Hoje</div>
+    <div class="kpi__value">{{ ocupados_hoje }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Livres Hoje</div>
+    <div class="kpi__value">{{ livres_hoje }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Check-ins Hoje</div>
+    <div class="kpi__value">{{ checkins_hoje }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Check-outs Hoje</div>
+    <div class="kpi__value">{{ checkouts_hoje }}</div>
+  </div>
 </section>
 
-<!-- CTA -->
-<section class="cta">
-  <h2>Leve seu hotel para o futuro com HospedAI</h2>
-  <button>Teste Gratuitamente</button>
+<section class="quick-actions">
+  <h2>Ações rápidas</h2>
+  <div class="qa__grid">
+    <a class="qa__card" href="{% url 'criar_quarto' %}">
+      <div class="qa__icon">🛏️</div>
+      <div class="qa__title">Cadastrar quarto</div>
+      <p>Cadastre novos quartos e defina tarifas e serviços.</p>
+    </a>
+
+    <a class="qa__card" href="{% url 'nova_reserva' %}">
+      <div class="qa__icon">📝</div>
+      <div class="qa__title">Nova reserva</div>
+      <p>Crie reservas com data/hora e acompanhe o status.</p>
+    </a>
+
+    <a class="qa__card" href="{% url 'calendario_quarto2' %}">
+      <div class="qa__icon">📅</div>
+      <div class="qa__title">Calendário</div>
+      <p>Veja a disponibilidade e ocupação por dia do mês.</p>
+    </a>
+
+    <a class="qa__card" href="{% url 'listar_quartos' %}">
+      <div class="qa__icon">📋</div>
+      <div class="qa__title">Listar quartos</div>
+      <p>Filtre por datas e veja quais estão disponíveis.</p>
+    </a>
+  </div>
 </section>
 
-<!-- Footer -->
-<footer>© 2025 HospedAI - Todos os direitos reservados.</footer>
+<section class="recent-reservations">
+  <h2>Últimas Reservas</h2>
+  {% if ultimas_reservas %}
+  <ul class="reserva-list">
+    {% for r in ultimas_reservas %}
+      <li class="reserva-item">
+        <div class="reserva-info">
+          <strong>{{ r.nome_cliente }}</strong> —
+          {{ r.quarto.tipo }} {{ r.quarto.numero }}
+        </div>
+        <div class="reserva-dates">
+          {{ r.data_entrada|date:"d/m/Y H:i" }} → {{ r.data_saida|date:"d/m/Y H:i" }}
+        </div>
+        <span class="status {{ r.status }}">{{ r.status|title }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  <div class="ver-todas">
+  <a href="{% url 'nova_reserva' %}" class="btn-ver-todas">➜ Ver todas reservas</a>
+</div>
+  {% else %}
+    <p>Nenhuma reserva registrada ainda.</p>
+  {% endif %}
+</section>
 
-<script>
-  // Dark mode toggle
-  function toggleDark() { document.body.classList.toggle('dark'); }
 
-  // Scroll animations
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting) entry.target.classList.add('show');
-    });
-  }, { threshold:0.2 });
+{% if not tem_quartos %}
+<section class="onboarding">
+  <div class="onb__card">
+    <h3>Comece em 3 passos</h3>
+    <ol>
+      <li>Cadastre seu primeiro quarto <a href="{% url 'criar_quarto' %}">aqui</a>.</li>
+      <li>Adicione serviços e fotos para destacar a oferta.</li>
+      <li>Crie sua primeira reserva em <a href="{% url 'nova_reserva' %}">Nova reserva</a>.</li>
+    </ol>
+    <p>Dica: use o <a href="{% url 'calendario_quarto2' %}">Calendário</a> para visualizar lotação e prever picos de demanda.</p>
+  </div>
+</section>
+{% endif %}
 
-  document.querySelectorAll('.hero-text, .hero-image, .feature-card, .cta').forEach(el => observer.observe(el));
-</script>
-
-</body>
-</html>
+<section class="promo">
+  <div class="promo__card">
+    <h2>HospedAI Premium</h2>
+    <p>Design premium, performance e produtividade. Integrações, relatórios e experiência moderna — tudo num só lugar.</p>
+    <div>
+      <a class="btn btn-primary" href="{% url 'calendario_quarto2' %}">Abrir Calendário</a>
+      <a class="btn btn-outline" href="{% url 'listar_quartos' %}">Explorar Quartos</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
