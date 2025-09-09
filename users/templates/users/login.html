@@ -1,98 +1,334 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Login - HospedAI</title>
-    {% load static %}
-<style>
-/* Body com background do site */
-body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  <meta charset="UTF-8" />
+  <title>Login — HospedAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --ink:#0f172a;          /* texto principal */
+      --muted:#6b7280;        /* texto secundário */
+      --primary:#4f46e5;      /* roxo HospedAI */
+      --primary-2:#6366f1;    /* roxo claro */
+      --glass:#ffffffaa;      /* vidro */
+      --glass-stroke:#ffffff33;
+      --success:#16a34a;
+      --danger:#dc2626;
+      --shadow:0 20px 60px rgba(2,6,23,.25);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color:var(--ink);
+      background:#fff;             /* base branca (pedido) */
+      overflow:hidden;              /* fundo fixo */
+      display:flex; align-items:center; justify-content:center;
+    }
 
-    background: url("{% static 'reservas/img/site_bg.png' %}") repeat; /* background do site */
-    background-color: #ffffff; /* fallback */
-}
+    /* --- Fundo animado (parado atrás, só as partículas movem) --- */
+    .bg-wrap{position:fixed; inset:0; z-index:-1; overflow:hidden}
+    /* brilhos suaves para dar profundidade */
+    .glow{
+      position:absolute; inset:-15% -10% auto auto; width:60vw; height:60vh;
+      background:radial-gradient(60% 60% at 70% 30%, rgba(79,70,229,.14) 0%, transparent 70%);
+      filter:blur(20px);
+    }
+    .glow.g2{
+      inset:auto auto -20% -10%; width:65vw; height:55vh;
+      background:radial-gradient(60% 60% at 30% 70%, rgba(99,102,241,.14) 0%, transparent 70%);
+    }
+    canvas#bg{position:absolute; inset:0; width:100%; height:100%}
 
-/* Container do login centralizado em duas colunas */
-.login-container {
-    display: flex;
-    width: 90%;
-    max-width: 1000px;
-    min-height: 80vh; /* aumentada a altura */
-    background-color: #fff; /* painel branco do login */
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
+    /* --- Card de login (glassmorphism) --- */
+    .card{
+      display:flex; width: min(1000px, 92vw); min-height: 72vh;
+      border-radius: 18px; overflow:hidden;
+      background: linear-gradient( to bottom right, rgba(255,255,255,.75), rgba(255,255,255,.55) );
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
+      border:1px solid var(--glass-stroke);
+      box-shadow: var(--shadow);
+    }
 
-/* Coluna da imagem ao lado do form */
-.login-image {
-    flex: 1.5; /* maior que a coluna do form */
-    background: url("{% static 'reservas/img/login_bg.png' %}") no-repeat center center;
-    background-size: cover;
-}
+    .side{
+      flex:1.25;
+      background: url("{% static 'login/img/login.png' %}") center/cover no-repeat;
+      position:relative;
+      isolation:isolate;
+    }
+    /* brilho sutil sobre a imagem */
+    .side::after{
+      content:""; position:absolute; inset:0;
+      background: radial-gradient(50% 50% at 70% 30%, rgba(255,255,255,.18), transparent 60%);
+      mix-blend-mode: screen;
+      pointer-events:none;
+    }
 
-/* Coluna do formulário */
-.login-form {
-    flex: 1; /* menor largura */
-    padding: 4rem 3rem; /* mantém espaçamento interno */
-    display: flex;
-    flex-direction: column; /* inputs empilhados */
-    justify-content: center;
-}
+    .form{
+      flex:1; display:flex; align-items:center; justify-content:center;
+      padding: 3rem 2.25rem;
+    }
+    .form-inner{ width:100%; max-width: 420px; }
 
-/* Título do login */
-.login-form h1 {
-    margin-bottom: 2rem;
-    text-align: center;
-}
+    .brand{
+      display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem; justify-content:center;
+      font-weight:800; letter-spacing:.2px; font-size: 1.55rem;
+    }
+    .brand i{
+      width:14px; height:14px; border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, #fff 0%, #fff 20%, var(--primary) 21%, var(--primary-2) 100%);
+      box-shadow: 0 0 0 4px rgba(79,70,229,.08), 0 0 18px rgba(79,70,229,.45);
+    }
+    .muted{ color:var(--muted); font-size:.925rem; text-align:center; margin-bottom:1.75rem;}
 
-/* Inputs e botão do formulário */
-.login-form input {
-    padding: 0.8rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-}
+    /* alerts (opcional: integra com messages do Django) */
+    .alert{border-radius:12px; padding:.75rem 1rem; margin-bottom:1rem; font-size:.92rem}
+    .alert.error{ background:#fee2e2; color:#991b1b; border:1px solid #fecaca }
+    .alert.success{ background:#dcfce7; color:#166534; border:1px solid #bbf7d0 }
 
-.login-form button {
-    padding: 0.8rem;
-    margin-top: 1rem; /* garante que fique abaixo do campo de senha */
-    background-color: #5A98D7;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    width: 100%;
-}
+    label{ display:block; font-size:.9rem; font-weight:600; margin:.35rem 0 .35rem .1rem }
+    .control{
+      display:flex; align-items:center; gap:.6rem;
+      border:1px solid #e5e7eb; border-radius:12px; padding:.85rem .95rem;
+      background:#fff; transition:border-color .2s, box-shadow .2s, transform .08s ease;
+    }
+    .control:focus-within{
+      border-color:var(--primary);
+      box-shadow: 0 0 0 4px rgba(79,70,229,.15);
+      transform: translateY(-1px);
+    }
+    .icon{
+      width:18px; height:18px; opacity:.75; flex:0 0 18px;
+      background: conic-gradient(from 90deg at 50% 50%, var(--primary), var(--primary-2));
+      -webkit-mask: var(--mask) center/contain no-repeat;
+      mask: var(--mask) center/contain no-repeat;
+    }
+    .icon.user{ --mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23000" viewBox="0 0 24 24"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5z"/></svg>'); }
+    .icon.lock{ --mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23000" viewBox="0 0 24 24"><path d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2zm-6 8v-3h2v3h-2zM9 8V6a3 3 0 116 0v2H9z"/></svg>'); }
+    .control input{
+      border:0; outline:0; flex:1; background:transparent; font-size:15px; color:var(--ink);
+    }
+    .hint{ font-size:.8rem; color:var(--muted); margin:.4rem .2rem 1rem }
 
-.login-form button:hover {
-    background-color: #293F74;
-}
-</style>
+    /* senha com toggle */
+    .suffix-btn{
+      border:0; background:transparent; cursor:pointer; padding:.2rem; opacity:.8;
+    }
+    .suffix-btn:hover{ opacity:1 }
+
+    .row{
+      display:flex; justify-content:space-between; align-items:center; gap:1rem; margin: .2rem 0 1.1rem;
+      font-size:.9rem;
+    }
+    .row a{ color:var(--primary); text-decoration:none }
+    .row a:hover{ text-decoration:underline }
+
+    button[type=submit]{
+      width:100%;
+      padding: .9rem 1rem; border:0; border-radius:12px; font-weight:700; color:#fff; cursor:pointer;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 30px rgba(79,70,229,.35);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    button[type=submit]:hover{ transform: translateY(-1px); box-shadow: 0 16px 38px rgba(79,70,229,.45) }
+    button[type=submit]:active{ transform: translateY(0) }
+
+    .divider{
+      display:flex; align-items:center; gap:.75rem; margin: 1.25rem 0;
+      color:var(--muted); font-size:.85rem;
+    }
+    .divider::before, .divider::after{
+      content:""; height:1px; flex:1; background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    }
+
+    .social{
+      display:flex; gap:.75rem; flex-wrap:wrap;
+    }
+    .social button{
+      flex:1 1 140px; background:#fff; color:var(--ink);
+      border:1px solid #e5e7eb; border-radius:10px; padding:.7rem .9rem; cursor:pointer;
+      transition:.15s; font-weight:600;
+    }
+    .social button:hover{ border-color: var(--primary); box-shadow: 0 6px 18px rgba(79,70,229,.15) }
+
+    .legal{
+      margin-top:1rem; color:var(--muted); font-size:.78rem; text-align:center;
+    }
+
+    /* responsivo */
+    @media (max-width: 880px){
+      .card{ flex-direction:column }
+      .side{ display:none }
+      .form{ padding: 2rem 1.4rem }
+    }
+
+    /* reduzir animação se o usuário preferir */
+    @media (prefers-reduced-motion: reduce){
+      canvas#bg{ display:none }
+    }
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-image"></div>
-        <div class="login-form">
-            <h1>Hosped<span style="color:#6F96D6;">AI</span></h1>
-            <form method="POST">
-                {% csrf_token %}
-                <input type="text" name="username" placeholder="Usuário" required>
-                <input type="password" name="password" placeholder="Senha" required>
-                <button type="submit">Entrar</button>
-            </form>
+
+  <!-- Fundo premium com partículas -->
+  <div class="bg-wrap" aria-hidden="true">
+    <div class="glow"></div>
+    <div class="glow g2"></div>
+    <canvas id="bg"></canvas>
+  </div>
+
+  <!-- Card (vidro) -->
+  <div class="card">
+    <div class="side"></div>
+
+    <div class="form">
+      <div class="form-inner">
+
+        <div class="brand">
+          <i></i> Hosped<span style="color:var(--primary)">AI</span>
         </div>
+        <p class="muted">Acesse o painel para gerenciar <strong>quartos</strong>, <strong>reservas</strong> e <strong>calendário</strong>.</p>
+
+        {# mensagens do Django (opcional) #}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alert {% if 'error' in m.tags %}error{% elif 'success' in m.tags %}success{% endif %}">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          <label for="id_username">Usuário</label>
+          <div class="control">
+            <span class="icon user" aria-hidden="true"></span>
+            <input id="id_username" type="text" name="username" placeholder="seu.usuario" autocomplete="username" required />
+          </div>
+          <div class="hint">Use seu usuário cadastrado no HospedAI.</div>
+
+          <label for="id_password">Senha</label>
+          <div class="control">
+            <span class="icon lock" aria-hidden="true"></span>
+            <input id="id_password" type="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" class="suffix-btn" id="togglePwd" aria-label="Mostrar/ocultar senha">👁️</button>
+          </div>
+          <div class="hint">Mantenha sua senha em sigilo. <span style="color:var(--success)">HTTPS ativo</span>.</div>
+
+          <div class="row">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+              <input type="checkbox" name="remember" style="accent-color:var(--primary)" />
+              Lembrar-me
+            </label>
+            <a href="#">Esqueci a senha</a>
+          </div>
+
+          <button type="submit">Entrar</button>
+
+          <div class="divider">ou</div>
+
+          <div class="social">
+            <button type="button" aria-label="Entrar com Google">Continuar com Google</button>
+            <button type="button" aria-label="Entrar com Microsoft">Continuar com Microsoft</button>
+          </div>
+
+          <p class="legal">
+            Ao continuar, você concorda com nossos <a href="#" style="color:var(--primary);text-decoration:none;">Termos</a> e <a href="#" style="color:var(--primary);text-decoration:none;">Privacidade</a>.
+          </p>
+        </form>
+      </div>
     </div>
+  </div>
+
+  <script>
+    /* ---------- Toggle de senha ---------- */
+    const toggle = document.getElementById('togglePwd');
+    const pwd = document.getElementById('id_password');
+    toggle.addEventListener('click',()=>{
+      const v = pwd.type === 'password' ? 'text' : 'password';
+      pwd.type = v;
+      toggle.textContent = v === 'password' ? '👁️' : '🙈';
+    });
+
+    /* ---------- Partículas premium (duas camadas, linhas, seguem o cursor) ---------- */
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+    function fit(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width  = innerWidth * dpr;
+      canvas.height = innerHeight * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', fit); fit();
+
+    const LAYERS = [
+      { n: 130, speed: .35, radius: 1.8, link: 110, colorPoint: 'rgba(79,70,229,.85)', colorLineBase: [99,102,241] },
+      { n: 80,  speed: .20, radius: 2.6, link: 160, colorPoint: 'rgba(99,102,241,.75)', colorLineBase: [79,70,229]  }
+    ];
+
+    const layers = LAYERS.map(L => ({
+      cfg: L,
+      pts: Array.from({length:L.n}, _ => ({
+        x: Math.random()*innerWidth,
+        y: Math.random()*innerHeight,
+        vx: (Math.random()-.5)*L.speed,
+        vy: (Math.random()-.5)*L.speed
+      }))
+    }));
+
+    let mouse = { x: innerWidth/2, y: innerHeight/2 };
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    function step(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+
+      for(const layer of layers){
+        const { cfg, pts } = layer;
+
+        // pontos
+        for(const p of pts){
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0 || p.x > innerWidth)  p.vx *= -1;
+          if (p.y < 0 || p.y > innerHeight) p.vy *= -1;
+
+          // suave “repel/atrai” do cursor
+          const dx = mouse.x - p.x, dy = mouse.y - p.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 140){
+            const f = (140 - d) / 140;
+            p.x -= dx * 0.002 * f;   // leve ajuste
+            p.y -= dy * 0.002 * f;
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, cfg.radius, 0, Math.PI*2);
+          ctx.fillStyle = cfg.colorPoint;
+          ctx.fill();
+        }
+
+        // linhas
+        for(let i=0;i<pts.length;i++){
+          for(let j=i+1;j<pts.length;j++){
+            const a = pts[i], b = pts[j];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < cfg.link){
+              const alpha = 1 - (dist / cfg.link);
+              ctx.strokeStyle = `rgba(${cfg.colorLineBase[0]},${cfg.colorLineBase[1]},${cfg.colorLineBase[2]},${0.65*alpha})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+    step();
+  </script>
 </body>
 </html>
