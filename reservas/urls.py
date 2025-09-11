@@ -19,4 +19,5 @@ urlpatterns = [
     path("api/gantt/", views.gantt_api, name="gantt_api"),
     path("gantt/", views.gantt_page, name="gantt_page"),
     path('api/gantt_window/', views.gantt_window_api, name='gantt_window_api'),
+    path("api/reservas/<int:pk>/", views.reserva_update_api, name="reserva_update_api"),
 ]

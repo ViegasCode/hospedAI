@@ -751,3 +751,58 @@ def gantt_window_api(request):
         })
 
     return JsonResponse(payload)
+
+from django.http import JsonResponse, HttpResponseNotAllowed
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import make_aware, is_naive
+import json
+
+from .models import Reserva
+
+@csrf_exempt
+def reserva_update_api(request, pk):
+    if request.method != "PATCH":
+        return HttpResponseNotAllowed(["PATCH"])
+
+    try:
+        res = Reserva.objects.select_related("quarto").get(pk=pk)
+    except Reserva.DoesNotExist:
+        return JsonResponse({"error": "Reserva não encontrada"}, status=404)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "JSON inválido"}, status=400)
+
+    # Atualiza status
+    status_novo = payload.get("status")
+    if status_novo in {"confirmada", "pendente", "cancelada"}:
+        res.status = status_novo
+
+    # Atualiza datas (start/end em ISO 8601)
+    start_iso = payload.get("start")
+    end_iso   = payload.get("end")
+    if start_iso:
+        dt = parse_datetime(start_iso)
+        if dt:
+            if is_naive(dt):
+                dt = make_aware(dt)
+            res.data_entrada = dt
+    if end_iso:
+        dt = parse_datetime(end_iso)
+        if dt:
+            if is_naive(dt):
+                dt = make_aware(dt)
+            res.data_saida = dt
+
+    res.save()
+
+    return JsonResponse({
+        "id": res.id,
+        "cliente": res.nome_cliente,
+        "status": res.status,
+        "start": res.data_entrada.isoformat(),
+        "end": res.data_saida.isoformat(),
+        "quarto": {"id": res.quarto_id, "label": str(res.quarto)}
+    })

@@ -12,16 +12,16 @@
     --primary-2:#6366f1;
     --line:#e5e7eb;
     --bg:#f7f8fc;
-    --row:#ffffff;
   }
 
   .gantt-toolbar{
     display:flex; gap:12px; align-items:center; justify-content:space-between;
     margin: 8px 0 14px;
   }
-  .gantt-toolbar .side{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .gantt-toolbar input[type="date"],
-  .gantt-toolbar select,
+  .gantt-toolbar .side{
+    display:flex; gap:8px; align-items:center;
+  }
+  .gantt-toolbar input[type="month"],
   .gantt-toolbar button{
     border:1px solid var(--line); background:#fff; color:var(--ink);
     padding:.5rem .75rem; border-radius:10px; cursor:pointer;
@@ -34,220 +34,144 @@
     box-shadow: 0 6px 18px rgba(15,23,42,.06);
   }
 
-  /* CONTAINER com scroll horizontal único para header+linhas */
   .gantt-grid{
+    display:grid;
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr;
     border:1px solid var(--line);
     border-radius:12px;
+    overflow:auto;
     background:#fff;
-    overflow:hidden; /* arredondado bonito */
   }
-  .scroller{
+  .gantt-header{
+    grid-column:1/-1;
     display:grid;
-    grid-template-columns: var(--labelW) auto; /* coluna do label + área timeline */
-    max-width: 100%;
-  }
-  .labels{
-    background:#fff; border-right:1px solid var(--line);
-  }
-  .timeline{
-    overflow:auto; /* scroll horizontal aqui */
-  }
-
-  /* HEADER (dentro do scroller para rolar junto) */
-  .header{
-    display:grid;
-    grid-template-columns: var(--labelW) auto;
+    grid-template-columns:200px 1fr;
     position:sticky; top:0; z-index:5;
-    background:#fff; border-bottom:1px solid var(--line);
-  }
-  .header .left{
-    padding:.75rem .9rem; font-weight:700; color:var(--ink);
-    border-right:1px solid var(--line);
-  }
-  .header .right{
-    position:relative;
-  }
-  .months{
-    display:grid; height:32px; align-items:center;
+    background:#fff;
     border-bottom:1px solid var(--line);
   }
-  .month{
-    text-align:center; font-weight:700; color:#374151; padding:.25rem 0;
-    background:#fafafa; border-left:1px solid #f1f1f4;
+  .gantt-header .left{
+    padding:.75rem .9rem; font-weight:700; color:var(--ink);
   }
-  .days{
-    display:grid; height:34px; align-items:center;
+  .gantt-header .days{
+    display:grid; gap:0; border-left:1px solid var(--line);
   }
-  .day{
-    text-align:center; font-size:.9rem; border-left:1px solid var(--line);
-    background:#fff;
+  .gantt-header .day{
+    text-align:center; padding:.5rem 0;
+    font-size:.9rem; border-left:1px solid var(--line);
+    background:#fafafa;
   }
 
-  /* LINHAS */
-  .rows{
-    display:block; /* cada linha vira uma grid própria */
-  }
-  .row{
-    display:grid; grid-template-columns: var(--labelW) auto;
-  }
-  .label{
+  .gantt-rows{ grid-column:1/-1; display:block; }
+  .gantt-row{ display:grid; grid-template-columns:200px 1fr; }
+  .gantt-row .label{
+    background:#fff; border-right:1px solid var(--line);
     padding:.65rem .9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    border-right:1px solid var(--line); border-bottom:1px solid var(--line);
-    background:#fff;
+    border-bottom:1px solid var(--line);
   }
-/* dentro do seu <style> existente */
+  .gantt-row .track{
+    position:relative; min-height:38px; background:#fff;
+    border-bottom:1px solid var(--line);
+    z-index:1; overflow:hidden;
+  }
 
-/* tira a necessidade da .track-grid */
-.track{
-  position:relative;
-  min-height:38px;
-  border-bottom:1px solid var(--line);
-  background:#fff;
-
-  /* NOVO: linhas verticais de dia com gradient */
-  /* --colW vem inline via React (ex.: 64px) */
-  background-image: repeating-linear-gradient(
-    to right,
-    transparent 0,
-    transparent calc(var(--colW) - 1px),
-    #eef0f4 calc(var(--colW) - 1px),
-    #eef0f4 var(--colW)
-  );
-  background-size: var(--colW) 100%;
-  background-repeat: repeat-x;
-  background-position: left top;
-}
-
-<!--  /* grade vertical dentro da trilha */-->
-<!--  .track-grid{-->
-<!--    position:absolute; inset:0; display:grid; pointer-events:none;-->
-<!--  }-->
-<!--  .track-grid > div{ border-left:1px dashed #eef0f4; }-->
-
-  /* BARRAS */
   .bar{
     position:absolute; top:6px; height:26px; border-radius:8px;
     display:flex; align-items:center; gap:8px; padding:0 .55rem;
-    color:#fff; font-weight:700; font-size:.86rem; letter-spacing:.2px;
-    box-shadow: 0 6px 18px rgba(79,70,229,.25);
-    overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+    color:#fff; font-weight:700; font-size:.86rem;
+    box-shadow:0 6px 18px rgba(79,70,229,.25);
+    white-space:nowrap; text-overflow:ellipsis;
+    cursor:pointer;
   }
-  .bar.confirmada{ background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
-  .bar.pendente{ background:linear-gradient(90deg, #f59e0b, #fbbf24); }
-  .bar.cancelada{ background:linear-gradient(90deg, #ef4444, #f87171); }
+  .bar.confirmada{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
+  .bar.pendente{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+  .bar.cancelada{ background:linear-gradient(90deg,#ef4444,#f87171); }
 
-  .legend{
-    display:flex; gap:12px; align-items:center; color:var(--muted);
+  .track-grid{ position:absolute; inset:0; display:grid; pointer-events:none; }
+  .track-grid > div{ border-left:1px dashed #eef0f4; }
+
+  .legend{ display:flex; gap:12px; align-items:center; color:var(--muted); }
+  .legend i{ width:14px; height:14px; border-radius:4px; display:inline-block; }
+  .legend .c1{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
+  .legend .c2{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+  .legend .c3{ background:linear-gradient(90deg,#ef4444,#f87171); }
+
+  /* Context Menu */
+  .ctx-menu{
+    position: fixed; z-index:50;
+    background:#fff; border:1px solid var(--line);
+    border-radius:10px; box-shadow:0 10px 30px rgba(15,23,42,.15);
+    padding:.35rem; min-width:180px;
   }
-  .legend i{ width:14px; height:14px; display:inline-block; border-radius:4px; }
-  .legend .c1{ background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
-  .legend .c2{ background:linear-gradient(90deg, #f59e0b, #fbbf24); }
-  .legend .c3{ background:linear-gradient(90deg, #ef4444, #f87171); }
+  .ctx-menu button{
+    width:100%; text-align:left; border:0; background:transparent;
+    cursor:pointer; padding:.55rem .65rem; border-radius:8px;
+    color:var(--ink);
+  }
+  .ctx-menu button:hover{ background:#f3f4f6; }
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.25);
+    z-index:40; display:flex; align-items:center; justify-content:center;
+  }
+  .modal{
+    background:#fff; border-radius:14px; padding:1rem 1.1rem;
+    width:min(92vw,440px);
+    box-shadow:0 20px 50px rgba(2,6,23,.25);
+  }
+  .modal h3{ margin-bottom:.75rem; }
+  .modal .row{ display:flex; gap:.5rem; margin:.5rem 0; }
+  .modal input{ flex:1; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px; }
+  .modal .actions{ display:flex; justify-content:flex-end; gap:.5rem; margin-top:.75rem; }
+  .modal .actions button{
+    border:1px solid var(--line); background:#fff; padding:.55rem .75rem; border-radius:10px; cursor:pointer;
+  }
+  .modal .actions .primary{
+    background:linear-gradient(90deg,var(--primary),var(--primary-2)); color:#fff; border:0;
+  }
 </style>
 
 <div id="HospedAIGantt"></div>
 
-<!-- React via CDN + Babel (somente dev/local) -->
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel">
-{% verbatim %}
-/** ========= Helpers ========= */
-const LABEL_W = 180;       // px da coluna de “Quarto”
-const COL_W   = 64;        // px por dia (ficou mais compacto)
-const DAY_MS  = 24*3600*1000;
-
-const pad = (n)=> n < 10 ? `0${n}` : `${n}`;
-const toISODateLocal = (d)=> {
-  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  return dt.toISOString().slice(0,10);
-};
-const addDays = (d, n)=> new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
-
-function monthName(date){
-  return date.toLocaleDateString('pt-BR', {month:'long'});
+  {% verbatim %}git
+const parseISO = (s)=> new Date(s);
+function rangeToFrac(start, end, year, month, dias) {
+  const base = new Date(year, month-1, 1,0,0,0,0);
+  const endExclusive = new Date(year, month-1, dias+1,0,0,0,0);
+  const msPerDay = 24*3600*1000;
+  const clampStart = new Date(Math.max(start, base));
+  const clampEnd   = new Date(Math.min(end, endExclusive));
+  let fs = (clampStart-base)/msPerDay;
+  let fe = (clampEnd-base)/msPerDay;
+  fs=Math.max(0,Math.min(fs,dias));
+  fe=Math.max(fs,Math.min(fe,dias));
+  return [fs,fe];
 }
 
-/** Constrói vetor de dias e grupos por mês (para header com spans) */
-function buildWindow(startISO, days){
-  const start = new Date(startISO + "T00:00:00"); // local midnight
-  const arr = [];
-  for(let i=0;i<days;i++){
-    const d = addDays(start, i);
-    arr.push({
-      date: d,
-      iso: toISODateLocal(d),
-      day: d.getDate(),
-      month: d.getMonth(),   // 0..11
-      year: d.getFullYear()
-    });
-  }
-  // agrupa por mês
-  const groups = [];
-  for(const d of arr){
-    const key = `${d.year}-${d.month}`;
-    const label = `${monthName(d.date)} ${d.year}`;
-    if(groups.length && groups[groups.length-1].key === key){
-      groups[groups.length-1].span++;
-    }else{
-      groups.push({ key, label, span:1 });
-    }
-  }
-  return { days: arr, groups };
-}
-
-/** Calcula posição da barra dentro da janela [start, start+days) */
-function fracInWindow(startISO, endISO, windowStartISO, windowDays){
-  const base = new Date(windowStartISO + "T00:00:00");
-  const wEnd = new Date(base.getTime() + windowDays*DAY_MS);
-
-  // ISO com timezone (ex.: +00:00) -> Date local
-  const rs = new Date(startISO);
-  const re = new Date(endISO);
-
-  const clampStart = new Date(Math.max(rs, base));
-  const clampEnd   = new Date(Math.min(re, wEnd));
-  if (clampEnd <= base || clampStart >= wEnd) return [0,0]; // fora
-
-  const fs = (clampStart - base)/DAY_MS;   // fração em “dias”
-  const fe = (clampEnd   - base)/DAY_MS;
-
-  // sanity clamps
-  const s = Math.max(0, Math.min(fs, windowDays));
-  const e = Math.max(s, Math.min(fe, windowDays));
-  return [s, e];
-}
-
-/** ========= UI ========= */
-function Toolbar({startISO, days, onChange, onReload}){
-  // start no input = YYYY-MM-DD
-  const [start, setStart] = React.useState(startISO);
-  const [win, setWin] = React.useState(String(days));
-
-  React.useEffect(()=>{ setStart(startISO); setWin(String(days)); }, [startISO, days]);
-
-  const apply = ()=> onChange(start, parseInt(win,10));
-
-  const nice = (() => {
-    const d = new Date(start + "T00:00:00");
-    return d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
-  })();
-
-  return (
+function Toolbar({year,month,onMonthChange,onReload}){
+  const prev=()=>{const d=new Date(year,month-2,1);onMonthChange(d.getFullYear(),d.getMonth()+1);}
+  const next=()=>{const d=new Date(year,month,1);onMonthChange(d.getFullYear(),d.getMonth()+1);}
+  const nice=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const value=`${year}-${String(month).padStart(2,'0')}`;
+  return(
     <div className="gantt-toolbar">
       <div className="side">
+        <button onClick={prev}>◀</button>
         <strong>{nice}</strong>
+        <button onClick={next}>▶</button>
       </div>
       <div className="side">
-        <input type="date" value={start} onChange={e=>setStart(e.target.value)} />
-        <select value={win} onChange={e=>setWin(e.target.value)}>
-          <option value="30">30 dias</option>
-          <option value="60">60 dias</option>
-          <option value="90">90 dias</option>
-        </select>
-        <button onClick={apply}>Aplicar</button>
+        <input type="month" value={value} onChange={(e)=>{
+          const [y,m]=e.target.value.split("-").map(Number);
+          onMonthChange(y,m);
+        }}/>
         <button onClick={onReload}>Recarregar</button>
       </div>
       <div className="legend">
@@ -259,56 +183,42 @@ function Toolbar({startISO, days, onChange, onReload}){
   );
 }
 
-function Header({days, groups}){
-  const gridStyle = {
-    '--labelW': LABEL_W + 'px'
-  };
-  const widthPx = days.length * COL_W + 'px';
-  const colsDef = `repeat(${days.length}, ${COL_W}px)`;
-
-  return (
-    <div className="header" style={gridStyle}>
+function HeaderDays({dias}){
+  const COL_W=80;
+  const cols=Array.from({length:dias},(_,i)=>i+1);
+  const style={gridTemplateColumns:`repeat(${dias}, ${COL_W}px)`,width:`${dias*COL_W}px`};
+  return(
+    <div className="gantt-header">
       <div className="left">Quarto</div>
-      <div className="right">
-        <div className="months" style={{ gridTemplateColumns: colsDef, width: widthPx }}>
-          {groups.map((g, idx)=>(
-            <div key={idx} className="month" style={{ gridColumn: `span ${g.span}` }}>{g.label}</div>
-          ))}
-        </div>
-        <div className="days" style={{ gridTemplateColumns: colsDef, width: widthPx }}>
-          {days.map((d, i)=> <div key={i} className="day">{d.day}</div>)}
-        </div>
+      <div className="days" style={style}>
+        {cols.map(d=><div key={d} className="day">{d}</div>)}
       </div>
     </div>
   );
 }
 
-function Row({room, windowStart, windowDays}){
-  const widthPx = windowDays * COL_W + 'px';
-  const colsDef = `repeat(${windowDays}, ${COL_W}px)`;
-
-  return (
-    <div className="row" style={{'--labelW': LABEL_W + 'px'}}>
+function Row({room,year,month,dias,onBarClick}){
+  const COL_W=80;
+  const colsStyle={gridTemplateColumns:`repeat(${dias},${COL_W}px)`,width:`${dias*COL_W}px`};
+  return(
+    <div className="gantt-row">
       <div className="label" title={room.label}>{room.label}</div>
-
-      {/* Passamos --colW para o CSS e definimos a largura da faixa */}
-      <div className="track" style={{ '--colW': COL_W + 'px', width: widthPx }}>
-        {/* REMOVIDO: a antiga <div className="track-grid"> */}
-
-        {(room.reservas || []).map(r=>{
-          const [fs, fe] = fracInWindow(r.start, r.end, windowStart, windowDays);
-          const leftPx  = fs * COL_W;
-          const width   = (fe - fs) * COL_W;
-          if (width <= 0) return null;
-          const cls = `bar ${r.status || 'confirmada'}`;
-          return (
-            <div
-              key={r.id}
-              className={cls}
-              style={{ left:`${leftPx}px`, width:`${width}px` }}
-              title={`${r.cliente || 'Reserva'} (${r.status || 'confirmada'}) • ${r.start} → ${r.end}`}
-            >
-              <span>{r.cliente || '—'}</span>
+      <div className="track">
+        <div className="track-grid" style={colsStyle}>
+          {Array.from({length:dias}).map((_,i)=><div key={i}></div>)}
+        </div>
+        {room.reservas.map(r=>{
+          const[start,end]=[parseISO(r.start),parseISO(r.end)];
+          const[fs,fe]=rangeToFrac(start,end,year,month,dias);
+          const leftPx=fs*COL_W;
+          const widthPx=(fe-fs)*COL_W;
+          const cls=`bar ${r.status||'confirmada'}`;
+          return(
+            <div key={r.id} className={cls}
+              style={{left:`${leftPx}px`,width:`${widthPx}px`}}
+              onClick={evt=>onBarClick(evt,r)}
+              title={`${r.cliente||'Reserva'} (${r.status}) • ${r.start} → ${r.end}`}>
+              <span>{r.cliente||'—'}</span>
             </div>
           );
         })}
@@ -317,23 +227,37 @@ function Row({room, windowStart, windowDays}){
   );
 }
 
-function Grid({payload}){
-  const startISO = payload.window_start;
-  const windowDays = payload.window_days;
-  const { days, groups } = buildWindow(startISO, windowDays);
-
-  return (
+function Grid({data,onBarClick}){
+  const{ano,mes,dias,quartos}=data;
+  return(
     <div className="gantt-grid">
-      {/* scroller contém header+linhas para rolar junto */}
-      <div className="scroller" style={{'--labelW': LABEL_W + 'px'}}>
-        <div className="labels"></div>
-        <div className="timeline">
-          <Header days={days} groups={groups} />
-          <div className="rows">
-            {payload.quartos.map(q=>(
-              <Row key={q.id} room={q} windowStart={startISO} windowDays={windowDays} />
-            ))}
-          </div>
+      <HeaderDays dias={dias}/>
+      <div className="gantt-rows">
+        {quartos.map(q=><Row key={q.id} room={q} year={ano} month={mes} dias={dias} onBarClick={onBarClick}/>)}
+      </div>
+    </div>
+  );
+}
+
+function ContextMenu({x,y,onConfirm,onCancel,onEdit}){
+  return(
+    <div className="ctx-menu" style={{left:x,top:y}} onClick={e=>e.stopPropagation()}>
+      <button onClick={onConfirm}>✅ Confirmar</button>
+      <button onClick={onCancel}>🛑 Cancelar</button>
+      <button onClick={onEdit}>✏️ Alterar datas…</button>
+    </div>
+  );
+}
+function EditModal({start,end,setStart,setEnd,onClose,onSave}){
+  return(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>Alterar período da reserva</h3>
+        <div className="row"><input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></div>
+        <div className="row"><input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></div>
+        <div className="actions">
+          <button onClick={onClose}>Fechar</button>
+          <button className="primary" onClick={onSave}>Salvar</button>
         </div>
       </div>
     </div>
@@ -341,43 +265,75 @@ function Grid({payload}){
 }
 
 function App(){
-  const today = new Date();
-  const defaultStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const [startISO, setStartISO] = React.useState(toISODateLocal(defaultStart));
-  const [winDays, setWinDays]   = React.useState(60);  // escolha padrão
-  const [data, setData]         = React.useState(null);
-  const [loading, setLoading]   = React.useState(false);
+  const today=new Date();
+  const[year,setYear]=React.useState(today.getFullYear());
+  const[month,setMonth]=React.useState(today.getMonth()+1);
+  const[data,setData]=React.useState(null);
+  const[loading,setLoading]=React.useState(false);
+  const[ctxOpen,setCtxOpen]=React.useState(false);
+  const[ctxPos,setCtxPos]=React.useState({x:0,y:0});
+  const[selectedRes,setSelectedRes]=React.useState(null);
+  const[editOpen,setEditOpen]=React.useState(false);
+  const[editStart,setEditStart]=React.useState("");
+  const[editEnd,setEditEnd]=React.useState("");
 
-  const load = async ()=>{
+  const load=async()=>{
     setLoading(true);
     try{
-      const url = `/reservas/api/gantt_window/?start=${startISO}&days=${winDays}`;
-      const r = await fetch(url);
-      const j = await r.json();
+      const r=await fetch(`/reservas/api/gantt/?ano=${year}&mes=${month}&window=90`);
+      const j=await r.json();
       setData(j);
-    } finally {
-      setLoading(false);
-    }
+    }finally{setLoading(false);}
+  };
+  React.useEffect(()=>{load();},[year,month]);
+
+  const openCtx=(evt,res)=>{
+    evt.stopPropagation();
+    setSelectedRes(res);setCtxPos({x:evt.clientX,y:evt.clientY});setCtxOpen(true);
+  };
+  React.useEffect(()=>{
+    const onDoc=()=>setCtxOpen(false);
+    if(ctxOpen)document.addEventListener('click',onDoc);
+    return()=>document.removeEventListener('click',onDoc);
+  },[ctxOpen]);
+
+  const patchReserva=async(payload)=>{
+    if(!selectedRes)return;
+    await fetch(`/reservas/api/reservas/${selectedRes.id}/`,{
+      method:"PATCH",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    setCtxOpen(false);setEditOpen(false);await load();
+  };
+  const confirmReserva=()=>patchReserva({status:"confirmada"});
+  const cancelReserva=()=>patchReserva({status:"cancelada"});
+  const openEditDates=()=>{
+    if(!selectedRes)return;
+    const toLocal=iso=>{
+      const d=new Date(iso);const pad=n=>(n<10?"0"+n:n);
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    setEditStart(toLocal(selectedRes.start));setEditEnd(toLocal(selectedRes.end));
+    setCtxOpen(false);setEditOpen(true);
+  };
+  const saveEditDates=()=>{
+    const startISO=new Date(editStart).toISOString();
+    const endISO=new Date(editEnd).toISOString();
+    return patchReserva({start:startISO,end:endISO});
   };
 
-  React.useEffect(()=>{ load(); }, [startISO, winDays]);
-
-  return (
+  return(
     <div className="gantt-wrap">
-      <Toolbar
-        startISO={startISO}
-        days={winDays}
-        onChange={(s,d)=>{ setStartISO(s); setWinDays(d); }}
-        onReload={load}
-      />
-      {loading && <div style={{padding:'8px 0', color:'#6b7280'}}>Carregando…</div>}
-      {data && <Grid payload={data} />}
+      <Toolbar year={year} month={month} onMonthChange={(y,m)=>{setYear(y);setMonth(m);}} onReload={load}/>
+      {loading&&<div style={{padding:"8px 0",color:"var(--muted)"}}>Carregando…</div>}
+      {data&&<Grid data={data} onBarClick={openCtx}/>}
+      {ctxOpen&&selectedRes&&<ContextMenu x={ctxPos.x} y={ctxPos.y} onConfirm={confirmReserva} onCancel={cancelReserva} onEdit={openEditDates}/>}
+      {editOpen&&selectedRes&&<EditModal start={editStart} end={editEnd} setStart={setEditStart} setEnd={setEditEnd} onClose={()=>setEditOpen(false)} onSave={saveEditDates}/>}
     </div>
   );
 }
-
-const root = ReactDOM.createRoot(document.getElementById("HospedAIGantt"));
-root.render(<App />);
-{% endverbatim %}
+const root=ReactDOM.createRoot(document.getElementById("HospedAIGantt"));
+root.render(<App/>);
+  {% endverbatim %}
 </script>
 {% endblock %}
