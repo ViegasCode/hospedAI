@@ -16,5 +16,7 @@ urlpatterns = [
     # (opcionais/legados)
     path("reservas_json/", views.reservas_json, name="reservas_json"),
     path("api/detalhes/", views.detalhes_dia, name="detalhes_dia"),  # <--- NOVO
-
+    path("api/gantt/", views.gantt_api, name="gantt_api"),
+    path("gantt/", views.gantt_page, name="gantt_page"),
+    path('api/gantt_window/', views.gantt_window_api, name='gantt_window_api'),
 ]

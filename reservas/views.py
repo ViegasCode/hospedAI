@@ -518,3 +518,236 @@ def detalhes_dia(request):
     ]
 
     return JsonResponse({"free": livres, "occupied": ocupados, "checkins": checkins})
+
+# reservas/views.py
+from datetime import datetime
+import calendar
+
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.utils import timezone
+
+from reservas.models import Reserva
+from quartos.models import Quarto
+
+
+
+def _month_bounds(ano: int, mes: int):
+    """(início_aware, fim_aware, dias_no_mes) para o mês."""
+    first_day = datetime(ano, mes, 1, 0, 0, 0)
+    last_day_num = calendar.monthrange(ano, mes)[1]
+    last_moment = datetime(ano, mes, last_day_num, 23, 59, 59, 999999)
+
+    if timezone.is_naive(first_day):
+        first_day = timezone.make_aware(first_day)
+    if timezone.is_naive(last_moment):
+        last_moment = timezone.make_aware(last_moment)
+    return first_day, last_moment, last_day_num
+
+
+def _iso_local(dt):
+    if dt is None:
+        return None
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    dt = timezone.localtime(dt)
+    return dt.replace(microsecond=0).isoformat()
+
+
+import calendar
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.http import JsonResponse
+from django.shortcuts import render
+from quartos.models import Quarto
+from reservas.models import Reserva
+
+def gantt_page(request):
+    # Renderiza o template React/JSX que você já está usando
+    return render(request, "reservas/gantt.html")
+
+def gantt_api(request):
+    """
+    Retorna JSON no formato:
+    {
+      "ano": 2025, "mes": 9, "dias": 30,
+      "quartos": [
+        {"id": 1, "label": "101 · Standard", "reservas":[
+           {"id": 55, "start": "2025-09-01T12:00:00-03:00", "end": "2025-09-03T12:00:00-03:00",
+            "cliente": "João Silva", "status": "confirmada"}
+        ]}
+      ]
+    }
+    """
+    # ano/mes vindos do front; default = mês atual
+    try:
+        ano = int(request.GET.get("ano") or datetime.now().year)
+        mes = int(request.GET.get("mes") or datetime.now().month)
+    except ValueError:
+        now = datetime.now()
+        ano, mes = now.year, now.month
+
+    # limites do mês (timezone-aware)
+    tz = timezone.get_current_timezone()
+    mes_inicio = timezone.make_aware(datetime(ano, mes, 1, 0, 0, 0), tz)
+    if mes == 12:
+        mes_fim = timezone.make_aware(datetime(ano + 1, 1, 1, 0, 0, 0), tz)
+    else:
+        mes_fim = timezone.make_aware(datetime(ano, mes + 1, 1, 0, 0, 0), tz)
+
+    # número de dias
+    dias = calendar.monthrange(ano, mes)[1]
+
+    # quartos ativos
+    quartos_qs = Quarto.objects.filter(ativo=True).order_by("numero", "id")
+
+    quartos_payload = []
+    for q in quartos_qs:
+        label = f"{q.numero} · {q.tipo}" if getattr(q, "numero", None) else (q.tipo or f"Quarto {q.id}")
+
+        # reservas que INTERSECTAM o mês
+        reservas_qs = Reserva.objects.filter(
+            quarto=q,
+            data_entrada__lt=mes_fim,
+            data_saida__gt=mes_inicio,
+            status__in=["pendente", "confirmada"]  # ajuste se usar outros status
+        ).order_by("data_entrada")
+
+        reservas_payload = []
+        for r in reservas_qs:
+            # isoformat com timezone
+            start_iso = r.data_entrada.isoformat()
+            end_iso = r.data_saida.isoformat()
+            reservas_payload.append({
+                "id": r.id,
+                "start": start_iso,
+                "end": end_iso,
+                "cliente": getattr(r, "nome_cliente", "") or "",
+                "status": (r.status or "confirmada").lower(),
+            })
+
+        quartos_payload.append({
+            "id": q.id,
+            "label": label,
+            "reservas": reservas_payload,
+        })
+
+    payload = {
+        "ano": ano,
+        "mes": mes,
+        "dias": dias,
+        "quartos": quartos_payload,
+    }
+    return JsonResponse(payload, safe=True)
+from datetime import date, datetime, timedelta
+from django.http import JsonResponse
+from django.utils.timezone import make_aware, is_aware, get_current_timezone
+from reservas.models import Reserva
+from quartos.models import Quarto
+
+def _to_naive_date(s):
+    # espera 'YYYY-MM-DD'
+    return datetime.strptime(s, "%Y-%m-%d").date()
+
+# reservas/views.py
+from datetime import datetime, timedelta, time
+from django.http import JsonResponse
+from django.utils import timezone
+from django.conf import settings
+
+from quartos.models import Quarto
+from reservas.models import Reserva
+
+def _aware(dt: datetime) -> datetime:
+    """Garante datetime timezone-aware conforme settings.USE_TZ."""
+    if settings.USE_TZ and timezone.is_naive(dt):
+        return timezone.make_aware(dt)
+    return dt
+
+# reservas/views.py
+from datetime import datetime, timedelta, time
+from django.http import JsonResponse
+from django.utils import timezone
+from django.conf import settings
+
+from quartos.models import Quarto
+from reservas.models import Reserva
+
+def _aware(dt: datetime) -> datetime:
+    """Garante datetime timezone-aware conforme settings.USE_TZ."""
+    if settings.USE_TZ and timezone.is_naive(dt):
+        return timezone.make_aware(dt)
+    return dt
+
+def gantt_window_api(request):
+    """
+    /reservas/api/gantt_window/?start=YYYY-MM-DD&days=30|60|90
+    Retorna:
+    {
+      "window_start": "YYYY-MM-DD",
+      "window_days": N,
+      "quartos": [{
+         "id": int, "label": "N · Tipo",
+         "reservas": [{
+            "id": int, "start": ISO8601, "end": ISO8601, "cliente": str, "status": str
+         }]
+      }, ...]
+    }
+    """
+    # 1) parâmetros
+    start_str = request.GET.get("start")
+    days_str  = request.GET.get("days", "30")
+    if not start_str:
+        # default: 1º dia do mês atual
+        today = timezone.localdate()
+        start_str = today.replace(day=1).isoformat()
+
+    try:
+        days = max(1, min(90, int(days_str)))
+    except ValueError:
+        days = 30
+
+    # 2) janela [start, end)
+    #    start é meia-noite local do dia informado; end é exclusivo
+    start_date = datetime.fromisoformat(start_str).date()
+    start_dt = _aware(datetime.combine(start_date, time.min))
+    end_dt   = start_dt + timedelta(days=days)
+
+    # 3) busca quartos (todos, mesmo sem reserva)
+    quartos_qs = Quarto.objects.all().order_by("id")  # troque para .order_by("numero") se preferir
+    # 4) busca reservas QUE INTERSECTAM a janela (não apenas “no mês”)
+    reservas_qs = (
+        Reserva.objects
+        .filter(status__in=["pendente", "confirmada", "cancelada"])
+        .filter(data_entrada__lt=end_dt, data_saida__gt=start_dt)  # overlap verdadeira
+        .select_related("quarto")
+        .order_by("data_entrada")
+    )
+
+    # 5) indexa reservas por quarto
+    by_quarto = {}
+    for r in reservas_qs:
+        by_quarto.setdefault(r.quarto_id, []).append({
+            "id": r.id,
+            "start": r.data_entrada.isoformat(),   # sem truncar!
+            "end": r.data_saida.isoformat(),
+            "cliente": r.nome_cliente or "",
+            "status": r.status or "confirmada",
+        })
+
+    # 6) monta payload
+    payload = {
+        "window_start": start_date.isoformat(),
+        "window_days": days,
+        "quartos": []
+    }
+
+    for q in quartos_qs:
+        label = f"{q.numero} · {q.tipo}" if getattr(q, "numero", None) else f"{q.id} · {q.tipo}"
+        payload["quartos"].append({
+            "id": q.id,
+            "label": label,
+            "reservas": by_quarto.get(q.id, [])
+        })
+
+    return JsonResponse(payload)
