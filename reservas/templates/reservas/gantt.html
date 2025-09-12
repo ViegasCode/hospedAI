@@ -6,172 +6,164 @@
 {% block content %}
 <style>
   :root{
-    --ink:#0f172a;
-    --muted:#6b7280;
-    --primary:#4f46e5;
-    --primary-2:#6366f1;
-    --line:#e5e7eb;
-    --bg:#f7f8fc;
+    --ink:#0f172a; --muted:#6b7280;
+    --primary:#4f46e5; --primary-2:#6366f1;
+    --line:#e5e7eb; --bg:#f7f8fc;
   }
-
   .gantt-toolbar{
     display:flex; gap:12px; align-items:center; justify-content:space-between;
-    margin: 8px 0 14px;
+    margin:8px 0 14px; flex-wrap:wrap;
   }
-  .gantt-toolbar .side{
-    display:flex; gap:8px; align-items:center;
-  }
-  .gantt-toolbar input[type="month"],
-  .gantt-toolbar button{
+  .gantt-toolbar .side{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .gantt-toolbar input[type="date"], .gantt-toolbar select, .gantt-toolbar button{
     border:1px solid var(--line); background:#fff; color:var(--ink);
     padding:.5rem .75rem; border-radius:10px; cursor:pointer;
   }
-  .gantt-toolbar button:hover{ border-color: var(--primary); }
+  .gantt-toolbar button:hover{ border-color:var(--primary); }
 
-  .gantt-wrap{
-    background:var(--bg);
-    border-radius:14px; padding:14px;
-    box-shadow: 0 6px 18px rgba(15,23,42,.06);
-  }
+  .gantt-wrap{ background:var(--bg); border-radius:14px; padding:14px;
+    box-shadow:0 6px 18px rgba(15,23,42,.06); }
 
-  .gantt-grid{
-    display:grid;
-    grid-template-columns: 200px 1fr;
-    grid-template-rows: auto 1fr;
-    border:1px solid var(--line);
-    border-radius:12px;
-    overflow:auto;
-    background:#fff;
-  }
-  .gantt-header{
-    grid-column:1/-1;
-    display:grid;
-    grid-template-columns:200px 1fr;
-    position:sticky; top:0; z-index:5;
-    background:#fff;
-    border-bottom:1px solid var(--line);
-  }
-  .gantt-header .left{
-    padding:.75rem .9rem; font-weight:700; color:var(--ink);
-  }
-  .gantt-header .days{
-    display:grid; gap:0; border-left:1px solid var(--line);
-  }
-  .gantt-header .day{
-    text-align:center; padding:.5rem 0;
-    font-size:.9rem; border-left:1px solid var(--line);
-    background:#fafafa;
-  }
+  /* Scroller único p/ header + linhas */
+  .gantt-grid{ border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; }
+  .scroller{ display:grid; grid-template-columns: var(--labelW) auto; max-width:100%; }
+  .labels{ background:#fff; border-right:1px solid var(--line); }
+  .timeline{ overflow:auto; position:relative; }
 
-  .gantt-rows{ grid-column:1/-1; display:block; }
-  .gantt-row{ display:grid; grid-template-columns:200px 1fr; }
-  .gantt-row .label{
-    background:#fff; border-right:1px solid var(--line);
-    padding:.65rem .9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    border-bottom:1px solid var(--line);
+  .header{
+    display:grid; grid-template-columns: var(--labelW) auto;
+    position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line);
   }
-  .gantt-row .track{
-    position:relative; min-height:38px; background:#fff;
-    border-bottom:1px solid var(--line);
-    z-index:1; overflow:hidden;
+  .header .left{ padding:.75rem .9rem; font-weight:700; color:var(--ink); border-right:1px solid var(--line); }
+  .months{ display:grid; height:32px; align-items:center; border-bottom:1px solid var(--line); }
+  .month{ text-align:center; font-weight:700; color:#374151; padding:.25rem 0; background:#fafafa; border-left:1px solid #f1f1f4; }
+  .days{ display:grid; height:34px; align-items:center; }
+  .day{ text-align:center; font-size:.9rem; border-left:1px solid var(--line); background:#fff; }
+
+  .rows{ display:block; }
+  .row{ display:grid; grid-template-columns: var(--labelW) auto; }
+  .label{
+    padding:.55rem .8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff;
+    font-size:.92rem;
+  }
+  .track{
+    position:relative; min-height:36px; border-bottom:1px solid var(--line); background:#fff;
+    /* linhas verticais de dia */
+    background-image:repeating-linear-gradient(to right, transparent 0, transparent calc(var(--colW) - 1px), #eef0f4 calc(var(--colW) - 1px), #eef0f4 var(--colW));
+    background-size: var(--colW) 100%; background-repeat:repeat-x; background-position:left top;
   }
 
   .bar{
-    position:absolute; top:6px; height:26px; border-radius:8px;
+    position:absolute; top:6px; height:24px; border-radius:8px;
     display:flex; align-items:center; gap:8px; padding:0 .55rem;
-    color:#fff; font-weight:700; font-size:.86rem;
-    box-shadow:0 6px 18px rgba(79,70,229,.25);
-    white-space:nowrap; text-overflow:ellipsis;
+    color:#fff; font-weight:700; font-size:.82rem; letter-spacing:.2px;
+    box-shadow:0 6px 18px rgba(79,70,229,.25); white-space:nowrap; text-overflow:ellipsis;
     cursor:pointer;
   }
   .bar.confirmada{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
   .bar.pendente{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
   .bar.cancelada{ background:linear-gradient(90deg,#ef4444,#f87171); }
 
-  .track-grid{ position:absolute; inset:0; display:grid; pointer-events:none; }
-  .track-grid > div{ border-left:1px dashed #eef0f4; }
-
   .legend{ display:flex; gap:12px; align-items:center; color:var(--muted); }
-  .legend i{ width:14px; height:14px; border-radius:4px; display:inline-block; }
+  .legend i{ width:14px; height:14px; display:inline-block; border-radius:4px; }
   .legend .c1{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
   .legend .c2{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
   .legend .c3{ background:linear-gradient(90deg,#ef4444,#f87171); }
 
-  /* Context Menu */
-  .ctx-menu{
-    position: fixed; z-index:50;
-    background:#fff; border:1px solid var(--line);
-    border-radius:10px; box-shadow:0 10px 30px rgba(15,23,42,.15);
-    padding:.35rem; min-width:180px;
+  /* Popover ancorado */
+  .popover{
+    position:fixed; z-index:60; background:#fff; border:1px solid var(--line);
+    border-radius:12px; box-shadow:0 20px 50px rgba(2,6,23,.25);
+    padding:.85rem; width:min(92vw,520px);
   }
-  .ctx-menu button{
-    width:100%; text-align:left; border:0; background:transparent;
-    cursor:pointer; padding:.55rem .65rem; border-radius:8px;
-    color:var(--ink);
-  }
-  .ctx-menu button:hover{ background:#f3f4f6; }
-
-  /* Modal */
-  .modal-backdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,.25);
-    z-index:40; display:flex; align-items:center; justify-content:center;
-  }
-  .modal{
-    background:#fff; border-radius:14px; padding:1rem 1.1rem;
-    width:min(92vw,440px);
-    box-shadow:0 20px 50px rgba(2,6,23,.25);
-  }
-  .modal h3{ margin-bottom:.75rem; }
-  .modal .row{ display:flex; gap:.5rem; margin:.5rem 0; }
-  .modal input{ flex:1; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px; }
-  .modal .actions{ display:flex; justify-content:flex-end; gap:.5rem; margin-top:.75rem; }
-  .modal .actions button{
-    border:1px solid var(--line); background:#fff; padding:.55rem .75rem; border-radius:10px; cursor:pointer;
-  }
-  .modal .actions .primary{
-    background:linear-gradient(90deg,var(--primary),var(--primary-2)); color:#fff; border:0;
+  .popover .hdr{ font-weight:800; margin-bottom:.35rem; }
+  .popover .meta{ color:var(--muted); font-size:.85rem; margin-bottom:.6rem; }
+  .popover .grid{ display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+  .popover label{ font-size:.85rem; font-weight:600; display:block; margin-bottom:.2rem; }
+  .popover input{ width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px; }
+  .popover .actions{ display:flex; justify-content:space-between; gap:.5rem; margin-top:.7rem; flex-wrap:wrap; }
+  .btn{ border:1px solid var(--line); background:#fff; padding:.55rem .75rem; border-radius:10px; cursor:pointer; }
+  .btn.primary{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); color:#fff; border:0; }
+  .btn.danger{ background:linear-gradient(90deg,#ef4444,#f87171); color:#fff; border:0; }
+  .backdrop{
+    position:fixed; inset:0; background:transparent; z-index:55; /* transparente: não escurece o fundo */
   }
 </style>
 
 <div id="HospedAIGantt"></div>
 
+<!-- React + Babel (dev/local) -->
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 {% verbatim %}
 <script type="text/babel">
-const parseISO = (s)=> new Date(s);
-function rangeToFrac(start, end, year, month, dias) {
-  const base = new Date(year, month-1, 1,0,0,0,0);
-  const endExclusive = new Date(year, month-1, dias+1,0,0,0,0);
-  const msPerDay = 24*3600*1000;
-  const clampStart = new Date(Math.max(start, base));
-  const clampEnd   = new Date(Math.min(end, endExclusive));
-  let fs = (clampStart-base)/msPerDay;
-  let fe = (clampEnd-base)/msPerDay;
-  fs=Math.max(0,Math.min(fs,dias));
-  fe=Math.max(fs,Math.min(fe,dias));
-  return [fs,fe];
+/* ===== Helpers ===== */
+const LABEL_W = 160;     // um pouco menor p/ caber mais timeline
+const COL_W   = 56;      // dia mais compacto
+const DAY_MS  = 24*3600*1000;
+
+const pad = n => n<10 ? `0${n}` : `${n}`;
+const toISODateLocal = d => {
+  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return dt.toISOString().slice(0,10);
+};
+const addDays = (d, n)=> new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const monthName = date => date.toLocaleDateString('pt-BR', {month:'long'});
+
+function buildWindow(startISO, days){
+  const start = new Date(startISO + "T00:00:00");
+  const arr = [];
+  for(let i=0;i<days;i++){
+    const d = addDays(start, i);
+    arr.push({date:d, iso:toISODateLocal(d), day:d.getDate(), month:d.getMonth(), year:d.getFullYear()});
+  }
+  const groups = [];
+  for(const d of arr){
+    const key = `${d.year}-${d.month}`, label = `${monthName(d.date)} ${d.year}`;
+    if(groups.length && groups[groups.length-1].key===key) groups[groups.length-1].span++;
+    else groups.push({key, label, span:1});
+  }
+  return {days:arr, groups};
 }
 
-function Toolbar({year,month,onMonthChange,onReload}){
-  const prev=()=>{const d=new Date(year,month-2,1);onMonthChange(d.getFullYear(),d.getMonth()+1);}
-  const next=()=>{const d=new Date(year,month,1);onMonthChange(d.getFullYear(),d.getMonth()+1);}
-  const nice=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const value=`${year}-${String(month).padStart(2,'0')}`;
-  return(
+function fracInWindow(startISO, endISO, windowStartISO, windowDays){
+  const base = new Date(windowStartISO + "T00:00:00");
+  const wEnd = new Date(base.getTime() + windowDays*DAY_MS);
+  const rs = new Date(startISO), re = new Date(endISO);
+  const clampStart = new Date(Math.max(rs, base));
+  const clampEnd   = new Date(Math.min(re, wEnd));
+  if (clampEnd <= base || clampStart >= wEnd) return [0,0];
+  const fs = (clampStart-base)/DAY_MS, fe = (clampEnd-base)/DAY_MS;
+  return [ Math.max(0,Math.min(fs,windowDays)), Math.max(0,Math.min(Math.max(fs,fe),windowDays)) ];
+}
+
+function getCookie(name){
+  const m = document.cookie.match(new RegExp('(^| )'+name+'=([^;]+)'));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+
+/* ===== UI ===== */
+function Toolbar({startISO, days, onChange, onReload}){
+  const [start, setStart] = React.useState(startISO);
+  const [win, setWin] = React.useState(String(days));
+  React.useEffect(()=>{ setStart(startISO); setWin(String(days)); }, [startISO, days]);
+  const apply = ()=> onChange(start, parseInt(win,10));
+  const nice = (()=>{ const d=new Date(start+"T00:00:00"); return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); })();
+
+  return (
     <div className="gantt-toolbar">
+      <div className="side"><strong>{nice}</strong></div>
       <div className="side">
-        <button onClick={prev}>◀</button>
-        <strong>{nice}</strong>
-        <button onClick={next}>▶</button>
-      </div>
-      <div className="side">
-        <input type="month" value={value} onChange={(e)=>{
-          const [y,m]=e.target.value.split("-").map(Number);
-          onMonthChange(y,m);
-        }}/>
+        <input type="date" value={start} onChange={e=>setStart(e.target.value)} />
+        <select value={win} onChange={e=>setWin(e.target.value)}>
+          <option value="30">30 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+        </select>
+        <button onClick={apply}>Aplicar</button>
         <button onClick={onReload}>Recarregar</button>
       </div>
       <div className="legend">
@@ -183,41 +175,43 @@ function Toolbar({year,month,onMonthChange,onReload}){
   );
 }
 
-function HeaderDays({dias}){
-  const COL_W=80;
-  const cols=Array.from({length:dias},(_,i)=>i+1);
-  const style={gridTemplateColumns:`repeat(${dias}, ${COL_W}px)`,width:`${dias*COL_W}px`};
-  return(
-    <div className="gantt-header">
+function Header({days, groups}){
+  const colsDef = `repeat(${days.length}, ${COL_W}px)`;
+  const widthPx = days.length * COL_W + 'px';
+  return (
+    <div className="header" style={{'--labelW': LABEL_W + 'px'}}>
       <div className="left">Quarto</div>
-      <div className="days" style={style}>
-        {cols.map(d=><div key={d} className="day">{d}</div>)}
+      <div className="right">
+        <div className="months" style={{gridTemplateColumns:colsDef, width:widthPx}}>
+          {groups.map((g,i)=><div key={i} className="month" style={{gridColumn:`span ${g.span}`}}>{g.label}</div>)}
+        </div>
+        <div className="days" style={{gridTemplateColumns:colsDef, width:widthPx}}>
+          {days.map((d,i)=><div key={i} className="day">{d.day}</div>)}
+        </div>
       </div>
     </div>
   );
 }
 
-function Row({room,year,month,dias,onBarClick}){
-  const COL_W=80;
-  const colsStyle={gridTemplateColumns:`repeat(${dias},${COL_W}px)`,width:`${dias*COL_W}px`};
-  return(
-    <div className="gantt-row">
+function Row({room, windowStart, windowDays, onBarClick}){
+  const widthPx = windowDays * COL_W + 'px';
+  return (
+    <div className="row" style={{'--labelW': LABEL_W + 'px'}}>
       <div className="label" title={room.label}>{room.label}</div>
-      <div className="track">
-        <div className="track-grid" style={colsStyle}>
-          {Array.from({length:dias}).map((_,i)=><div key={i}></div>)}
-        </div>
-        {room.reservas.map(r=>{
-          const[start,end]=[parseISO(r.start),parseISO(r.end)];
-          const[fs,fe]=rangeToFrac(start,end,year,month,dias);
-          const leftPx=fs*COL_W;
-          const widthPx=(fe-fs)*COL_W;
-          const cls=`bar ${r.status||'confirmada'}`;
-          return(
-            <div key={r.id} className={cls}
-              style={{left:`${leftPx}px`,width:`${widthPx}px`}}
-              onClick={evt=>onBarClick(evt,r)}
-              title={`${r.cliente||'Reserva'} (${r.status}) • ${r.start} → ${r.end}`}>
+      <div className="track" style={{'--colW': COL_W + 'px', width: widthPx}}>
+        {(room.reservas||[]).map(r=>{
+          const [fs,fe]=fracInWindow(r.start,r.end,windowStart,windowDays);
+          const left = fs*COL_W, w=(fe-fs)*COL_W;
+          if (w<=0) return null;
+          const cls = `bar ${r.status||'confirmada'}`;
+          return (
+            <div
+              key={r.id}
+              className={cls}
+              style={{left:`${left}px`, width:`${w}px`}}
+              title={`${r.cliente||'Reserva'} (${r.status||'confirmada'}) • ${r.start} → ${r.end}`}
+              onClick={e=>onBarClick(r, e.currentTarget)}
+            >
               <span>{r.cliente||'—'}</span>
             </div>
           );
@@ -227,113 +221,147 @@ function Row({room,year,month,dias,onBarClick}){
   );
 }
 
-function Grid({data,onBarClick}){
-  const{ano,mes,dias,quartos}=data;
-  return(
+function Grid({payload, onBarClick}){
+  const startISO = payload.window_start, windowDays = payload.window_days;
+  const {days, groups} = buildWindow(startISO, windowDays);
+  return (
     <div className="gantt-grid">
-      <HeaderDays dias={dias}/>
-      <div className="gantt-rows">
-        {quartos.map(q=><Row key={q.id} room={q} year={ano} month={mes} dias={dias} onBarClick={onBarClick}/>)}
-      </div>
-    </div>
-  );
-}
-
-function ContextMenu({x,y,onConfirm,onCancel,onEdit}){
-  return(
-    <div className="ctx-menu" style={{left:x,top:y}} onClick={e=>e.stopPropagation()}>
-      <button onClick={onConfirm}>✅ Confirmar</button>
-      <button onClick={onCancel}>🛑 Cancelar</button>
-      <button onClick={onEdit}>✏️ Alterar datas…</button>
-    </div>
-  );
-}
-function EditModal({start,end,setStart,setEnd,onClose,onSave}){
-  return(
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e=>e.stopPropagation()}>
-        <h3>Alterar período da reserva</h3>
-        <div className="row"><input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></div>
-        <div className="row"><input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></div>
-        <div className="actions">
-          <button onClick={onClose}>Fechar</button>
-          <button className="primary" onClick={onSave}>Salvar</button>
+      <div className="scroller" style={{'--labelW': LABEL_W + 'px'}}>
+        <div className="labels"></div>
+        <div className="timeline" id="timeline-scroll">
+          <Header days={days} groups={groups}/>
+          <div className="rows">
+            {payload.quartos.map(q=><Row key={q.id} room={q} windowStart={startISO} windowDays={windowDays} onBarClick={onBarClick}/>)}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+/* ===== Popover (editor ancorado) ===== */
+function PopoverEdit({rect, reserva, onClose, onSaved}){
+  const [start,setStart]=React.useState(""); const [end,setEnd]=React.useState("");
+  const [saving,setSaving]=React.useState(false);
+  React.useEffect(()=>{
+    if(!reserva) return;
+    const toLocal=iso=>{ const d=new Date(iso);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    };
+    setStart(toLocal(reserva.start)); setEnd(toLocal(reserva.end));
+  },[reserva]);
+
+  // posicionamento inteligente (preferir abaixo/à direita, com fallback)
+  const margin = 8;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const prefLeft = Math.min(rect.left, vw-520-margin); // largura máxima do popover ~520px
+  const prefTopBelow = Math.min(rect.bottom + margin, vh-300-margin); // altura estimada ~300px
+  const top = (rect.bottom + margin + 300 > vh) ? Math.max(margin, rect.top - margin - 300) : prefTopBelow;
+  const left = Math.max(margin, prefLeft);
+
+  const csrf=getCookie('csrftoken');
+  const doPatch=async(payload)=>{
+    setSaving(true);
+    try{
+      await fetch(`/reservas/api/reservas/${reserva.id}/`,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json', ...(csrf?{'X-CSRFToken':csrf}:{})},
+        body:JSON.stringify(payload)
+      });
+      onSaved();
+    }finally{ setSaving(false); }
+  };
+  const salvarDatas=()=>doPatch({start:new Date(start).toISOString(), end:new Date(end).toISOString()});
+  const confirmar = ()=>doPatch({status:'confirmada'});
+  const cancelar  = ()=>doPatch({status:'cancelada'});
+
+  return (
+    <>
+      <div className="backdrop" onClick={onClose} />
+      <div className="popover" style={{left:`${left}px`, top:`${top}px`}} onClick={e=>e.stopPropagation()}>
+        <div className="hdr">Reserva #{reserva.id} — {reserva.cliente||'Cliente'}</div>
+        <div className="meta">Status: <strong>{(reserva.status||'confirmada').toUpperCase()}</strong></div>
+        <div className="grid">
+          <div>
+            <label>Entrada</label>
+            <input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/>
+          </div>
+          <div>
+            <label>Saída</label>
+            <input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/>
+          </div>
+        </div>
+        <div className="actions">
+          <div>
+            <button className="btn" onClick={confirmar} disabled={saving}>✅ Confirmar</button>
+            <button className="btn danger" onClick={cancelar} disabled={saving}>🛑 Cancelar</button>
+          </div>
+          <div>
+            <button className="btn" onClick={onClose}>Fechar</button>
+            <button className="btn primary" onClick={salvarDatas} disabled={saving}>Salvar</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ===== App ===== */
 function App(){
   const today=new Date();
-  const[year,setYear]=React.useState(today.getFullYear());
-  const[month,setMonth]=React.useState(today.getMonth()+1);
+  const defaultStart=new Date(today.getFullYear(), today.getMonth(), 1);
+  const[startISO,setStartISO]=React.useState(toISODateLocal(defaultStart));
+  const[winDays,setWinDays]=React.useState(60);
   const[data,setData]=React.useState(null);
   const[loading,setLoading]=React.useState(false);
-  const[ctxOpen,setCtxOpen]=React.useState(false);
-  const[ctxPos,setCtxPos]=React.useState({x:0,y:0});
-  const[selectedRes,setSelectedRes]=React.useState(null);
-  const[editOpen,setEditOpen]=React.useState(false);
-  const[editStart,setEditStart]=React.useState("");
-  const[editEnd,setEditEnd]=React.useState("");
+
+  const[popoverOpen,setPopoverOpen]=React.useState(false);
+  const[anchorRect,setAnchorRect]=React.useState(null);
+  const[activeRes,setActiveRes]=React.useState(null);
 
   const load=async()=>{
     setLoading(true);
     try{
-      const r=await fetch(`/reservas/api/gantt/?ano=${year}&mes=${month}&window=90`);
-      const j=await r.json();
-      setData(j);
-    }finally{setLoading(false);}
+      const r=await fetch(`/reservas/api/gantt_window/?start=${startISO}&days=${winDays}`);
+      const j=await r.json(); setData(j);
+    }finally{ setLoading(false); }
   };
-  React.useEffect(()=>{load();},[year,month]);
+  React.useEffect(()=>{ load(); },[startISO,winDays]);
 
-  const openCtx=(evt,res)=>{
-    evt.stopPropagation();
-    setSelectedRes(res);setCtxPos({x:evt.clientX,y:evt.clientY});setCtxOpen(true);
+  const onBarClick=(res, el)=>{
+    const rect = el.getBoundingClientRect();
+    setAnchorRect(rect); setActiveRes(res); setPopoverOpen(true);
   };
+  const closePopover=()=>setPopoverOpen(false);
+  const refreshAfterSave=async()=>{ setPopoverOpen(false); await load(); };
+
+  // fecha popover com ESC
   React.useEffect(()=>{
-    const onDoc=()=>setCtxOpen(false);
-    if(ctxOpen)document.addEventListener('click',onDoc);
-    return()=>document.removeEventListener('click',onDoc);
-  },[ctxOpen]);
+    const onKey=(e)=>{ if(e.key==='Escape') setPopoverOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return ()=>document.removeEventListener('keydown', onKey);
+  },[]);
 
-  const patchReserva=async(payload)=>{
-    if(!selectedRes)return;
-    await fetch(`/reservas/api/reservas/${selectedRes.id}/`,{
-      method:"PATCH",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-    setCtxOpen(false);setEditOpen(false);await load();
-  };
-  const confirmReserva=()=>patchReserva({status:"confirmada"});
-  const cancelReserva=()=>patchReserva({status:"cancelada"});
-  const openEditDates=()=>{
-    if(!selectedRes)return;
-    const toLocal=iso=>{
-      const d=new Date(iso);const pad=n=>(n<10?"0"+n:n);
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
-    setEditStart(toLocal(selectedRes.start));setEditEnd(toLocal(selectedRes.end));
-    setCtxOpen(false);setEditOpen(true);
-  };
-  const saveEditDates=()=>{
-    const startISO=new Date(editStart).toISOString();
-    const endISO=new Date(editEnd).toISOString();
-    return patchReserva({start:startISO,end:endISO});
-  };
-
-  return(
+  return (
     <div className="gantt-wrap">
-      <Toolbar year={year} month={month} onMonthChange={(y,m)=>{setYear(y);setMonth(m);}} onReload={load}/>
-      {loading&&<div style={{padding:"8px 0",color:"var(--muted)"}}>Carregando…</div>}
-      {data&&<Grid data={data} onBarClick={openCtx}/>}
-      {ctxOpen&&selectedRes&&<ContextMenu x={ctxPos.x} y={ctxPos.y} onConfirm={confirmReserva} onCancel={cancelReserva} onEdit={openEditDates}/>}
-      {editOpen&&selectedRes&&<EditModal start={editStart} end={editEnd} setStart={setEditStart} setEnd={setEditEnd} onClose={()=>setEditOpen(false)} onSave={saveEditDates}/>}
+      <Toolbar
+        startISO={startISO}
+        days={winDays}
+        onChange={(s,d)=>{ setStartISO(s); setWinDays(d); }}
+        onReload={load}
+      />
+      {loading && <div style={{padding:'8px 0', color:'#6b7280'}}>Carregando…</div>}
+      {data && <Grid payload={data} onBarClick={onBarClick} />}
+
+      {popoverOpen && activeRes && anchorRect &&
+        <PopoverEdit rect={anchorRect} reserva={activeRes} onClose={closePopover} onSaved={refreshAfterSave} />
+      }
     </div>
   );
 }
-const root=ReactDOM.createRoot(document.getElementById("HospedAIGantt"));
-root.render(<App/>);
+
+const root = ReactDOM.createRoot(document.getElementById('HospedAIGantt'));
+root.render(<App />);
 </script>
 {% endverbatim %}
 {% endblock %}

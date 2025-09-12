@@ -673,13 +673,22 @@ from django.conf import settings
 from quartos.models import Quarto
 from reservas.models import Reserva
 
+# reservas/views.py
+from datetime import datetime, timedelta, time
+from django.http import JsonResponse
+from django.utils import timezone
+from django.conf import settings
+
+from quartos.models import Quarto
+from reservas.models import Reserva
+
 def _aware(dt: datetime) -> datetime:
     """Garante datetime timezone-aware conforme settings.USE_TZ."""
     if settings.USE_TZ and timezone.is_naive(dt):
         return timezone.make_aware(dt)
     return dt
 
-def gantt_window_api(request):
+def gantt_window(request):
     """
     /reservas/api/gantt_window/?start=YYYY-MM-DD&days=30|60|90
     Retorna:
@@ -752,6 +761,7 @@ def gantt_window_api(request):
 
     return JsonResponse(payload)
 
+
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -806,3 +816,101 @@ def reserva_update_api(request, pk):
         "end": res.data_saida.isoformat(),
         "quarto": {"id": res.quarto_id, "label": str(res.quarto)}
     })
+from datetime import date, datetime, timedelta
+from django.http import JsonResponse
+from django.utils.timezone import make_aware, is_aware, get_current_timezone
+from reservas.models import Reserva
+from quartos.models import Quarto
+
+def _to_naive_date(s):
+    # espera 'YYYY-MM-DD'
+    return datetime.strptime(s, "%Y-%m-%d").date()
+
+def gantt_window_api(request):
+    """
+    GET /reservas/api/gantt_window/?start=YYYY-MM-DD&days=90
+    Janela deslizante para o Gantt (mostra reservas que INTERSECTAM a janela).
+    """
+    tz = get_current_timezone()
+
+    # parâmetros
+    start_param = request.GET.get("start")
+    days_param = request.GET.get("days")
+
+    if start_param:
+        window_start = _to_naive_date(start_param)
+    else:
+        # padrão: primeiro dia do mês corrente
+        today = date.today()
+        window_start = date(today.year, today.month, 1)
+
+    window_days = int(days_param) if days_param else 90
+    if window_days < 1:
+        window_days = 90
+
+    window_end_exclusive = window_start + timedelta(days=window_days)  # fim EXCLUSIVO
+
+    # quartos (todos, inclusive sem reservas)
+    quartos_qs = Quarto.objects.filter(ativo=True).order_by("numero", "id")
+
+    # reservas que tocam a janela
+    reservas_qs = Reserva.objects.filter(
+        data_saida__date__gte=window_start,     # termina depois do início
+        data_entrada__date__lt=window_end_exclusive  # começa antes do fim
+    ).select_related("quarto")
+
+    # indexar reservas por quarto
+    by_quarto = {}
+    for r in reservas_qs:
+        qid = r.quarto_id if r.quarto_id else None
+        if not qid:
+            continue
+        by_quarto.setdefault(qid, []).append(r)
+
+    # quebras de mês (para o header)
+    month_breaks = []
+    cur = window_start
+    last_label = None
+    for i in range(window_days):
+        d = window_start + timedelta(days=i)
+        if d.day == 1 or i == 0:
+            label = d.strftime("%b/%Y")  # ex.: Sep/2025
+            month_breaks.append({"label": label, "offset": i})
+            last_label = label
+
+    # montar payload
+    payload = {
+        "window_start": window_start.isoformat(),
+        "window_days": window_days,
+        "month_breaks": month_breaks,
+        "quartos": []
+    }
+
+    for q in quartos_qs:
+        reservas_out = []
+        for r in by_quarto.get(q.id, []):
+            # datas aware -> isoformat
+            dt_in = r.data_entrada if is_aware(r.data_entrada) else make_aware(r.data_entrada, tz)
+            dt_out = r.data_saida if is_aware(r.data_saida) else make_aware(r.data_saida, tz)
+
+            starts_before = dt_in.date() < window_start
+            ends_after = dt_out.date() >= window_end_exclusive
+
+            reservas_out.append({
+                "id": r.id,
+                "start": dt_in.isoformat(),
+                "end": dt_out.isoformat(),
+                "cliente": r.nome_cliente or "",
+                "status": r.status or "confirmada",
+                "starts_before_window": starts_before,
+                "ends_after_window": ends_after,
+            })
+
+        label = f"{q.numero} · {q.tipo}" if getattr(q, "tipo", None) else f"{q.numero}"
+        payload["quartos"].append({
+            "id": q.id,
+            "label": label,
+            "reservas": reservas_out,
+        })
+
+    return JsonResponse(payload)
