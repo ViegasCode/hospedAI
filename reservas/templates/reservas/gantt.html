@@ -139,8 +139,8 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+{% verbatim %}
 <script type="text/babel">
-  {% verbatim %}git
 const parseISO = (s)=> new Date(s);
 function rangeToFrac(start, end, year, month, dias) {
   const base = new Date(year, month-1, 1,0,0,0,0);
@@ -334,6 +334,6 @@ function App(){
 }
 const root=ReactDOM.createRoot(document.getElementById("HospedAIGantt"));
 root.render(<App/>);
-  {% endverbatim %}
 </script>
+{% endverbatim %}
 {% endblock %}
