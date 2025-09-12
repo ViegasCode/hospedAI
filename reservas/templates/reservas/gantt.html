@@ -17,7 +17,6 @@
   .gantt-toolbar{
     display:flex; gap:12px; align-items:center; justify-content:space-between;
     margin: 8px 0 14px;
-    flex-wrap: wrap;
   }
   .gantt-toolbar .side{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   .gantt-toolbar input[type="date"],
@@ -34,7 +33,7 @@
     box-shadow: 0 6px 18px rgba(15,23,42,.06);
   }
 
-  /* GRID com scroll único (header acompanha) */
+  /* GRID COM SCROLL */
   .gantt-grid{
     border:1px solid var(--line);
     border-radius:12px;
@@ -46,9 +45,9 @@
     grid-template-columns: var(--labelW) auto;
     max-width: 100%;
   }
-  .labels{ background:#fff; border-right:1px solid var(--line); }
-  .timeline{ overflow:auto; position: relative; }
+  .timeline{ overflow:auto; }
 
+  /* HEADER (rola junto) */
   .header{
     display:grid;
     grid-template-columns: var(--labelW) auto;
@@ -59,182 +58,179 @@
     padding:.75rem .9rem; font-weight:700; color:var(--ink);
     border-right:1px solid var(--line);
   }
-  .months{ display:grid; height:32px; align-items:center; border-bottom:1px solid var(--line); }
+  .months{
+    display:grid; height:32px; align-items:center;
+    border-bottom:1px solid var(--line);
+  }
   .month{
     text-align:center; font-weight:700; color:#374151; padding:.25rem 0;
     background:#fafafa; border-left:1px solid #f1f1f4;
   }
-  .days{ display:grid; height:34px; align-items:center; }
-  .day{ text-align:center; font-size:.9rem; border-left:1px solid var(--line); background:#fff; }
-
-  .rows{ display:block; }
-  .row{ display:grid; grid-template-columns: var(--labelW) auto; }
-  .label{
-    padding:.65rem .9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  .days{
+    display:grid; height:34px; align-items:center;
+  }
+  .day{
+    text-align:center; font-size:.9rem; border-left:1px solid var(--line);
     background:#fff;
   }
+
+  /* LINHAS */
+  .row{ display:grid; grid-template-columns: var(--labelW) auto; }
+  .label{
+    padding:.55rem .75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:#fff; font-size:.92rem;
+  }
   .track{
-    position:relative; min-height:38px; border-bottom:1px solid var(--line); background:#fff;
-    /* linhas verticais por dia */
+    position:relative; min-height:38px; background:#fff;
+    border-bottom:1px solid var(--line);
+
+    /* GRADE DE DIAS — camada 1 (no background da faixa) */
     background-image: repeating-linear-gradient(
       to right,
       transparent 0,
-      transparent calc(var(--colW) - 1px),
-      #eef0f4 calc(var(--colW) - 1px),
-      #eef0f4 var(--colW)
+      transparent calc(var(--colW, 60px) - 1px),
+      #eef0f4 calc(var(--colW, 60px) - 1px),
+      #eef0f4 var(--colW, 60px)
     );
-    background-size: var(--colW) 100%;
+    background-size: var(--colW, 60px) 100%;
+    background-repeat: repeat-x;
+    background-position: left top;
+    overflow: hidden;
+  }
+
+  /* GRADE DE DIAS — camada 2 (div dedicada) */
+  .grid-lines{
+    position:absolute; inset:0;
+    pointer-events:none;
+    background-image: repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(var(--colW, 60px) - 1px),
+      #eef0f4 calc(var(--colW, 60px) - 1px),
+      #eef0f4 var(--colW, 60px)
+    );
+    background-size: var(--colW, 60px) 100%;
     background-repeat: repeat-x;
     background-position: left top;
   }
 
-  /* Barras */
+  /* BARRAS */
   .bar{
     position:absolute; top:6px; height:26px; border-radius:8px;
     display:flex; align-items:center; gap:8px; padding:0 .55rem;
-    color:#fff; font-weight:700; font-size:.86rem; letter-spacing:.2px;
-    box-shadow: 0 6px 18px rgba(79,70,229,.25);
-    overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
-    cursor: pointer;
+    color:#fff; font-weight:700; font-size:.86rem;
+    box-shadow:0 6px 18px rgba(79,70,229,.25);
+    white-space:nowrap; text-overflow:ellipsis;
+    cursor:pointer;
   }
-  .bar.confirmada{ background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
-  .bar.pendente{ background:linear-gradient(90deg, #f59e0b, #fbbf24); }
-  .bar.cancelada{ background:linear-gradient(90deg, #ef4444, #f87171); }
+  .bar.confirmada{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
+  .bar.pendente{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+  .bar.cancelada{ background:linear-gradient(90deg,#ef4444,#f87171); }
+
+  /* Hover sutil da célula */
+  .cell-hover{
+    position:absolute; top:0; height:100%;
+    width: var(--colW, 60px);
+    pointer-events:none;
+    background: rgba(79,70,229,.06);
+    box-shadow: inset 0 0 0 1px rgba(79,70,229,.12);
+    border-radius: 4px;
+    transition: opacity .08s ease;
+    opacity:.85;
+  }
+  .cell-hover.blocked{
+    background: rgba(15,23,42,.05);
+    box-shadow: inset 0 0 0 1px rgba(15,23,42,.08);
+  }
 
   .legend{ display:flex; gap:12px; align-items:center; color:var(--muted); }
   .legend i{ width:14px; height:14px; display:inline-block; border-radius:4px; }
-  .legend .c1{ background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
-  .legend .c2{ background:linear-gradient(90deg, #f59e0b, #fbbf24); }
-  .legend .c3{ background:linear-gradient(90deg, #ef4444, #f87171); }
+  .legend .c1{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); }
+  .legend .c2{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+  .legend .c3{ background:linear-gradient(90deg,#ef4444,#f87171); }
 
-  /* Popover (editar/confirmar/cancelar) posicionado próximo ao clique */
+  /* POPOVER / MODAIS */
   .popover{
     position: fixed; z-index: 60;
     background:#fff; border:1px solid var(--line);
-    border-radius:12px; box-shadow: 0 16px 40px rgba(2,6,23,.18);
-    padding:.7rem; min-width: 260px;
+    border-radius:12px; box-shadow:0 16px 50px rgba(2,6,23,.18);
+    width:min(92vw, 420px);
   }
-  .popover h4{ margin:0 0 .4rem 0; font-size: .98rem; }
-  .popover .row{ display:flex; gap:.5rem; margin:.5rem 0; }
-  .popover label{ font-size:.85rem; color:#374151; font-weight:600; }
-  .popover input, .popover select{
-    width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px;
+  .pop-header{ padding:.75rem .9rem; border-bottom:1px solid var(--line); font-weight:700; }
+  .pop-body{ padding:.8rem .9rem; display:flex; flex-direction:column; gap:.6rem; }
+  .pop-row{ display:flex; gap:.5rem; }
+  .pop-row input, .pop-row select{
+    flex:1; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px;
   }
-  .popover .actions{ display:flex; justify-content:flex-end; gap:.5rem; margin-top:.6rem; }
+  .pop-actions{
+    display:flex; justify-content:space-between; gap:.5rem; padding:.8rem .9rem; border-top:1px solid var(--line);
+  }
   .btn{ border:1px solid var(--line); background:#fff; padding:.55rem .75rem; border-radius:10px; cursor:pointer; }
-  .btn.primary{ background:linear-gradient(90deg, var(--primary), var(--primary-2)); color:#fff; border:0; }
-  .btn.warn{ background:#fee2e2; border-color:#fecaca; color:#991b1b; }
+  .btn.primary{ background:linear-gradient(90deg,var(--primary),var(--primary-2)); color:#fff; border:0; }
+  .btn.danger{ background:linear-gradient(90deg,#ef4444,#f87171); color:#fff; border:0; }
 
-  /* Modal Nova Reserva */
-  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.25); z-index:50; }
-  .modal{
-    position: fixed; z-index: 60;
-    background:#fff; border:1px solid var(--line);
-    border-radius:12px; box-shadow: 0 16px 40px rgba(2,6,23,.18);
-    padding: .9rem; width: min(92vw, 420px);
+  /* TOAST */
+  .toast{
+    position:fixed; right:14px; bottom:14px; z-index:70;
+    background:#0f172a; color:#fff; padding:.6rem .8rem; border-radius:10px;
+    box-shadow:0 10px 30px rgba(2,6,23,.25);
   }
-  .modal h3{ margin:0 0 .5rem 0; }
-  .modal .row{ display:flex; gap:.5rem; margin:.45rem 0; }
-  .modal label{ font-size:.85rem; color:#374151; font-weight:600; }
-  .modal input, .modal select{
-    width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:10px;
-  }
-  .modal .actions{ display:flex; justify-content:flex-end; gap:.5rem; margin-top:.6rem; }
 </style>
 
 <div id="HospedAIGantt"></div>
 
-<!-- React via CDN + Babel (somente dev/local) -->
+<!-- React via CDN + Babel -->
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel">
 {% verbatim %}
-/* ================= Helpers ================= */
-const LABEL_W = 180;
-const COL_W   = 64;
-const DAY_MS  = 24*3600*1000;
+/** ====== Constantes / Utils ====== */
+const LABEL_W = 160;
+const COL_W   = 60;
+const DAY_MS  = 86400000;
 
-const pad = (n)=> n < 10 ? `0${n}` : `${n}`;
-const toISODateLocal = (d)=> {
-  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  return new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
-};
-const addDays = (d, n)=> new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const API_CREATE = "/reservas/api/reservas/";
+const API_UPDATE = (id)=> `/reservas/api/reservas/${id}/`;
 
-function monthName(date){
-  return date.toLocaleDateString('pt-BR', {month:'long'});
-}
 function getCookie(name){
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
+  const value=`; ${document.cookie}`;
+  const parts=value.split(`; ${name}=`);
+  if(parts.length===2) return parts.pop().split(";").shift();
 }
+const csrftoken = getCookie("csrftoken");
 
-/** Constrói janela (dias + grupos por mês) */
 function buildWindow(startISO, days){
-  const start = new Date(startISO + "T00:00:00");
-  const arr = [];
+  const start = new Date(startISO+"T00:00:00");
+  const arr=[]; const groups=[];
   for(let i=0;i<days;i++){
-    const d = addDays(start, i);
-    arr.push({
-      date: d,
-      iso: toISODateLocal(d),
-      day: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear()
-    });
-  }
-  const groups = [];
-  for(const d of arr){
-    const key = `${d.year}-${d.month}`;
-    const label = `${monthName(d.date)} ${d.year}`;
-    if(groups.length && groups[groups.length-1].key === key){
+    const d=new Date(start.getTime()+i*DAY_MS);
+    arr.push({date:d, day:d.getDate(), month:d.getMonth(), year:d.getFullYear()});
+    const key=`${d.getFullYear()}-${d.getMonth()}`;
+    if(groups.length && groups[groups.length-1].key===key){
       groups[groups.length-1].span++;
     }else{
-      groups.push({ key, label, span:1 });
+      groups.push({key,label:d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}),span:1});
     }
   }
-  return { days: arr, groups };
+  return {days:arr, groups};
 }
 
-/** Fração da reserva dentro da janela [startISO, startISO+days) */
-function fracInWindow(startISO, endISO, windowStartISO, windowDays){
-  const base = new Date(windowStartISO + "T00:00:00");
-  const wEnd = new Date(base.getTime() + windowDays*DAY_MS);
-  const rs = new Date(startISO);
-  const re = new Date(endISO);
-  const clampStart = new Date(Math.max(rs, base));
-  const clampEnd   = new Date(Math.min(re, wEnd));
-  if (clampEnd <= base || clampStart >= wEnd) return [0,0];
-
-  const fs = (clampStart - base)/DAY_MS;
-  const fe = (clampEnd   - base)/DAY_MS;
-  const s = Math.max(0, Math.min(fs, windowDays));
-  const e = Math.max(s, Math.min(fe, windowDays));
-  return [s, e];
-}
-
-/* ================= UI ================= */
-function Toolbar({startISO, days, onChange, onReload}){
-  const [start, setStart] = React.useState(startISO);
-  const [win, setWin] = React.useState(String(days));
-  React.useEffect(()=>{ setStart(startISO); setWin(String(days)); }, [startISO, days]);
-
-  const apply = ()=> onChange(start, parseInt(win,10));
-  const nice = (() => {
-    const d = new Date(start + "T00:00:00");
-    return d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
-  })();
-
-  return (
+/** ====== UI ====== */
+function Toolbar({startISO,days,onChange,onReload}){
+  const [start,setStart]=React.useState(startISO);
+  const [win,setWin]=React.useState(String(days));
+  React.useEffect(()=>{setStart(startISO);setWin(String(days));},[startISO,days]);
+  const apply=()=>onChange(start,parseInt(win,10));
+  return(
     <div className="gantt-toolbar">
-      <div className="side"><strong>{nice}</strong></div>
       <div className="side">
-        <input type="date" value={start} onChange={e=>setStart(e.target.value)} />
+        <strong>{new Date(start+"T00:00:00").toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong>
+      </div>
+      <div className="side">
+        <input type="date" value={start} onChange={e=>setStart(e.target.value)}/>
         <select value={win} onChange={e=>setWin(e.target.value)}>
           <option value="30">30 dias</option>
           <option value="60">60 dias</option>
@@ -243,7 +239,7 @@ function Toolbar({startISO, days, onChange, onReload}){
         <button onClick={apply}>Aplicar</button>
         <button onClick={onReload}>Recarregar</button>
       </div>
-      <div className="side legend">
+      <div className="legend">
         <span><i className="c1"></i> Confirmada</span>
         <span><i className="c2"></i> Pendente</span>
         <span><i className="c3"></i> Cancelada</span>
@@ -252,197 +248,86 @@ function Toolbar({startISO, days, onChange, onReload}){
   );
 }
 
-function Header({days, groups}){
-  const widthPx = days.length * COL_W + 'px';
-  const colsDef = `repeat(${days.length}, ${COL_W}px)`;
-  return (
-    <div className="header" style={{'--labelW': LABEL_W + 'px'}}>
+function Header({days,groups}){
+  const widthPx=days.length*COL_W+"px";
+  const cols=`repeat(${days.length},${COL_W}px)`;
+  return(
+    <div className="header" style={{'--labelW':LABEL_W+'px'}}>
       <div className="left">Quarto</div>
       <div className="right">
-        <div className="months" style={{ gridTemplateColumns: colsDef, width: widthPx }}>
-          {groups.map((g, idx)=>(
-            <div key={idx} className="month" style={{ gridColumn: `span ${g.span}` }}>{g.label}</div>
-          ))}
+        <div className="months" style={{gridTemplateColumns:cols,width:widthPx}}>
+          {groups.map((g,i)=><div key={i} className="month" style={{gridColumn:`span ${g.span}`}}>{g.label}</div>)}
         </div>
-        <div className="days" style={{ gridTemplateColumns: colsDef, width: widthPx }}>
-          {days.map((d, i)=> <div key={i} className="day">{d.day}</div>)}
+        <div className="days" style={{gridTemplateColumns:cols,width:widthPx}}>
+          {days.map((d,i)=><div key={i} className="day">{d.day}</div>)}
         </div>
       </div>
     </div>
   );
 }
 
-/* Popover de edição (barra existente) */
-function EditPopover({x,y, reserva, onClose, onSaved}){
-  const [status, setStatus] = React.useState(reserva.status || 'confirmada');
-  const toLocal = (iso)=>{
-    const d=new Date(iso); const p=n=>(n<10?"0"+n:n);
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-  };
-  const [start, setStart] = React.useState(toLocal(reserva.start));
-  const [end, setEnd]     = React.useState(toLocal(reserva.end));
-  const csrf = getCookie('csrftoken');
+function Row({room, windowStart, windowDays, onBarClick, onCreateRequest}){
+  const base=new Date(windowStart+"T00:00:00");
+  const reservas=(room.reservas||[]).map(r=>({...r,s:new Date(r.start),e:new Date(r.end)}));
 
-  const patch = async (payload)=>{
-    const r = await fetch(`/reservas/api/reservas/${reserva.id}/`,{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json', ...(csrf?{'X-CSRFToken':csrf}:{})},
-      body: JSON.stringify(payload)
+  const [hoverIdx,setHoverIdx]=React.useState(null);
+  const [blocked,setBlocked]=React.useState(false);
+
+  const isBlocked=(idx)=>{
+    const dayStart=new Date(base.getTime()+idx*DAY_MS);
+    const dayEnd=new Date(base.getTime()+(idx+1)*DAY_MS);
+    return reservas.some(r=>r.status!=="cancelada"&&r.s<dayEnd&&r.e>dayStart);
+  };
+
+  const onMove=(e)=>{
+    const rect=e.currentTarget.getBoundingClientRect();
+    let idx=Math.floor((e.clientX-rect.left)/COL_W);
+    if(idx<0)idx=0;if(idx>=windowDays)idx=windowDays-1;
+    setHoverIdx(idx);setBlocked(isBlocked(idx));
+  };
+  const onLeave=()=>{setHoverIdx(null);setBlocked(false);};
+
+  // >>> ALTERADO: usa a posição do clique como âncora e abre abaixo da célula
+  const onTrackClick=(e)=>{
+    if(hoverIdx==null||blocked)return;
+    const start=new Date(base.getTime()+hoverIdx*DAY_MS);
+    const anchor={ x:e.clientX, y:e.clientY + 28 };
+    onCreateRequest?.({
+      roomId:room.id,
+      roomLabel:room.label,
+      startISO:start.toISOString(),
+      anchor
     });
-    if(!r.ok){
-      const t = await r.text().catch(()=> '');
-      alert('Falha ao atualizar: '+r.status+' '+t);
-      throw new Error('PATCH failed');
-    }
   };
 
-  const saveDates = async ()=>{
-    await patch({
-      status,
-      data_entrada: new Date(start).toISOString(),
-      data_saida:   new Date(end).toISOString()
-    });
-    onSaved(); onClose();
-  };
-  const confirm = async ()=>{ await patch({status:'confirmada'}); onSaved(); onClose(); };
-  const cancel  = async ()=>{ await patch({status:'cancelada'});  onSaved(); onClose(); };
-
-  return (
-    <div className="popover" style={{ left:x, top:y }} onClick={e=>e.stopPropagation()}>
-      <h4>{reserva.cliente || 'Reserva'} — #{reserva.id}</h4>
-      <div className="row">
-        <label style={{minWidth:80}}>Status</label>
-        <select value={status} onChange={e=>setStatus(e.target.value)}>
-          <option value="pendente">pendente</option>
-          <option value="confirmada">confirmada</option>
-          <option value="cancelada">cancelada</option>
-        </select>
-      </div>
-      <div className="row">
-        <label style={{minWidth:80}}>Entrada</label>
-        <input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/>
-      </div>
-      <div className="row">
-        <label style={{minWidth:80}}>Saída</label>
-        <input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/>
-      </div>
-      <div className="actions">
-        <button className="btn" onClick={onClose}>Fechar</button>
-        <button className="btn warn" onClick={cancel}>Cancelar</button>
-        <button className="btn" onClick={confirm}>Confirmar</button>
-        <button className="btn primary" onClick={saveDates}>Salvar</button>
-      </div>
-    </div>
-  );
-}
-
-/* Modal Nova Reserva (clique em célula) */
-function NewModal({x,y, room, dateISO, onClose, onSaved}){
-  // default: início 14:00, fim +1 dia às 12:00
-  const d0 = new Date(dateISO + "T14:00:00");
-  const d1 = new Date(d0.getTime() + DAY_MS - 2*60*60*1000);
-  const fmtLocal = (d)=> {
-    const p=n=>(n<10?"0"+n:n);
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  const clamp=(s,e)=>{
+    const winStart=base.getTime();const winEnd=base.getTime()+windowDays*DAY_MS;
+    const S=Math.max(s.getTime(),winStart);const E=Math.min(e.getTime(),winEnd);
+    if(E<=S)return null;const fs=(S-winStart)/DAY_MS;const fe=(E-winStart)/DAY_MS;
+    return {left:fs*COL_W,width:(fe-fs)*COL_W};
   };
 
-  const [cliente, setCliente] = React.useState('');
-  const [email, setEmail]     = React.useState('');
-  const [telefone, setTelefone] = React.useState('');
-  const [status, setStatus]   = React.useState('pendente');
-  const [start, setStart]     = React.useState(fmtLocal(d0));
-  const [end, setEnd]         = React.useState(fmtLocal(d1));
+  return(
+    <div className="row" style={{'--labelW':LABEL_W+'px'}}>
+      <div className="label">{room.label}</div>
+      <div className="track" style={{'--colW':COL_W+'px', width:(windowDays*COL_W)+'px'}}
+        onMouseMove={onMove} onMouseLeave={onLeave} onClick={onTrackClick}>
 
-  const csrf = getCookie('csrftoken');
+        <div className="grid-lines" style={{'--colW':COL_W+'px'}}></div>
 
-  const save = async ()=>{
-    // Monta payload mínimo
-    const payload = {
-      quarto: room.id,
-      nome_cliente: cliente.trim(),
-      email: email.trim(),
-      telefone: telefone.trim(),
-      status,
-      data_entrada: new Date(start).toISOString(),
-      data_saida:   new Date(end).toISOString()
-    };
-    // SÓ envia tipo_quarto se existir no objeto room
-    if (room.tipo) {
-      payload.tipo_quarto = String(room.tipo).toLowerCase();
-    }
+        {hoverIdx!=null&&(
+          <div className={`cell-hover ${blocked?'blocked':''}`} style={{left:(hoverIdx*COL_W)+'px'}}/>
+        )}
 
-    const r = await fetch(`/reservas/api/reservas/`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json', ...(csrf?{'X-CSRFToken':csrf}:{})},
-      body: JSON.stringify(payload)
-    });
-
-    if(!r.ok){
-      let msg = '';
-      try { msg = await r.text(); } catch(e){}
-      alert('Falha ao criar a reserva: '+r.status+' '+msg);
-      return;
-    }
-    onSaved(); onClose();
-  };
-
-  return (
-    <>
-      <div className="modal-backdrop" onClick={onClose}></div>
-      <div className="modal" style={{ left:x, top:y }} onClick={e=>e.stopPropagation()}>
-        <h3>Nova Reserva — Quarto {room.label}</h3>
-        <div className="row"><input placeholder="Nome do cliente" value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
-        <div className="row"><input type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)}/></div>
-        <div className="row"><input placeholder="Telefone" value={telefone} onChange={e=>setTelefone(e.target.value)}/></div>
-        <div className="row">
-          <select value={status} onChange={e=>setStatus(e.target.value)}>
-            <option value="pendente">pendente</option>
-            <option value="confirmada">confirmada</option>
-          </select>
-        </div>
-        <div className="row"><input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></div>
-        <div className="row"><input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></div>
-        <div className="actions">
-          <button className="btn" onClick={onClose}>Cancelar</button>
-          <button className="btn primary" onClick={save}>Salvar</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function Row({room, windowStart, windowDays, onBarClick, onEmptyClick}){
-  const widthPx = windowDays * COL_W + 'px';
-
-  const onTrackClick = (e)=>{
-    if(e.target !== e.currentTarget) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const dayIndex = Math.floor(x / COL_W);
-    const startDate = new Date(new Date(windowStart + "T00:00:00").getTime() + dayIndex*DAY_MS);
-    const iso = toISODateLocal(startDate);
-    onEmptyClick(e, room, iso);
-  };
-
-  return (
-    <div className="row" style={{'--labelW': LABEL_W + 'px'}}>
-      <div className="label" title={room.label}>{room.label}</div>
-      <div className="track" style={{ '--colW': COL_W + 'px', width: widthPx }} onClick={onTrackClick}>
-        {(room.reservas || []).map(r=>{
-          const [fs, fe] = fracInWindow(r.start, r.end, windowStart, windowDays);
-          const leftPx  = fs * COL_W;
-          const width   = (fe - fs) * COL_W;
-          if (width <= 0) return null;
-          const cls = `bar ${r.status || 'confirmada'}`;
-          return (
-            <div
-              key={r.id}
-              className={cls}
-              style={{ left:`${leftPx}px`, width:`${width}px` }}
-              title={`${r.cliente || 'Reserva'} (${r.status || 'confirmada'}) • ${r.start} → ${r.end}`}
-              onClick={(evt)=> onBarClick(evt, r)}
-            >
-              <span>{r.cliente || '—'}</span>
+        {reservas.map(r=>{
+          const proj=clamp(r.s,r.e); if(!proj) return null;
+          const cls=`bar ${r.status||'confirmada'}`;
+          return(
+            <div key={r.id} className={cls}
+              style={{left:proj.left+'px',width:proj.width+'px'}}
+              title={`${r.cliente||'Reserva'} (${r.status||'confirmada'})`}
+              onClick={(evt)=>{evt.stopPropagation(); onBarClick?.(evt,r);}}>
+              <span>{r.cliente||'—'}</span>
             </div>
           );
         })}
@@ -451,26 +336,22 @@ function Row({room, windowStart, windowDays, onBarClick, onEmptyClick}){
   );
 }
 
-function Grid({payload, onBarClick, onEmptyClick}){
-  const startISO = payload.window_start;
-  const windowDays = payload.window_days;
-  const { days, groups } = buildWindow(startISO, windowDays);
-
-  return (
+function Grid({payload, onBarClick, onCreateRequest}){
+  const {days,groups}=buildWindow(payload.window_start, payload.window_days);
+  return(
     <div className="gantt-grid">
-      <div className="scroller" style={{'--labelW': LABEL_W + 'px'}}>
+      <div className="scroller" style={{'--labelW':LABEL_W+'px'}}>
         <div className="labels"></div>
         <div className="timeline">
-          <Header days={days} groups={groups} />
+          <Header days={days} groups={groups}/>
           <div className="rows">
             {payload.quartos.map(q=>(
-              <Row
-                key={q.id}
+              <Row key={q.id}
                 room={q}
-                windowStart={startISO}
-                windowDays={windowDays}
+                windowStart={payload.window_start}
+                windowDays={payload.window_days}
                 onBarClick={onBarClick}
-                onEmptyClick={onEmptyClick}
+                onCreateRequest={onCreateRequest}
               />
             ))}
           </div>
@@ -480,58 +361,208 @@ function Grid({payload, onBarClick, onEmptyClick}){
   );
 }
 
+/* ---------- Utilitários de posicionamento / feedback ---------- */
+function placeNear(x,y,width=420,height=300,margin=10){
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=x+margin, top=y+margin;
+  if(left+width>vw) left=Math.max(10, x-width-margin);
+  if(top+height>vh) top=Math.max(10, y-height-margin);
+  return {left, top};
+}
+function Toast({msg}){ if(!msg) return null; return <div className="toast">{msg}</div>; }
+const API_TOAST = { ok:(s)=>s, err:(e)=> (typeof e==='string'? e : (e?.message || 'Erro inesperado')) };
+
+/* ---------- Popover de edição ---------- */
+function EditReservationPopover({anchor, reserva, onClose, onSaved, toast}){
+  const [start,setStart]=React.useState("");
+  const [end,setEnd]=React.useState("");
+  React.useEffect(()=>{
+    if(!reserva) return;
+    const toLocal=(iso)=>{
+      const d=new Date(iso); const p=n=>n<10?"0"+n:n;
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+    setStart(toLocal(reserva.start)); setEnd(toLocal(reserva.end));
+  },[reserva]);
+  if(!reserva) return null;
+  const pos=placeNear(anchor.x, anchor.y, 420, 260);
+  const patch=async(body)=>{
+    const r=await fetch(API_UPDATE(reserva.id),{
+      method:"PATCH",
+      headers:{ "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken")||"" },
+      body:JSON.stringify(body)
+    });
+    if(!r.ok){ const j=await r.json().catch(()=>({})); throw new Error(j.error||`Falha (${r.status})`); }
+    return r.json();
+  };
+  const saveDates=async()=>{ try{
+    await patch({data_entrada:new Date(start).toISOString(), data_saida:new Date(end).toISOString()});
+    toast("Reserva atualizada."); onSaved(); onClose();
+  }catch(e){ toast(API_TOAST.err(e)); } };
+  const toConfirm=async()=>{ try{ await patch({status:"confirmada"}); toast("Reserva confirmada."); onSaved(); onClose(); }catch(e){ toast(API_TOAST.err(e)); } };
+  const toCancel=async()=>{ try{ await patch({status:"cancelada"}); toast("Reserva cancelada."); onSaved(); onClose(); }catch(e){ toast(API_TOAST.err(e)); } };
+
+  return(
+    <div className="popover" style={{left:pos.left, top:pos.top}}>
+      <div className="pop-header">Editar reserva — {reserva.cliente||"—"}</div>
+      <div className="pop-body">
+        <div className="pop-row"><input type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></div>
+        <div className="pop-row"><input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></div>
+      </div>
+      <div className="pop-actions">
+        <button className="btn" onClick={toCancel}>Cancelar reserva</button>
+        <div style={{display:"flex", gap:8}}>
+          <button className="btn" onClick={toConfirm}>Confirmar</button>
+          <button className="btn primary" onClick={saveDates}>Salvar</button>
+          <button className="btn" onClick={onClose}>Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Popover de criação (abre abaixo da célula clicada) ---------- */
+function CreateReservationPopover({anchor, draft, quartos, onClose, onSaved, toast}){
+  const [form,setForm]=React.useState({
+    quarto: draft?.roomId || "",
+    nome_cliente:"",
+    email:"",
+    telefone:"",
+    status:"confirmada",
+    data_entrada:"",
+    data_saida:"",
+    tipo_quarto:""
+  });
+  React.useEffect(()=>{
+    if(!draft) return;
+    const start=new Date(draft.startISO);
+    const end=new Date(start.getTime()+DAY_MS);
+    const p=n=>n<10?"0"+n:n;
+    const fmt=d=>`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    // check-in 14h, check-out 11h
+    const s=new Date(start); s.setHours(14,0,0,0);
+    const e=new Date(end);   e.setHours(11,0,0,0);
+    setForm(f=>({
+      ...f,
+      quarto:draft.roomId,
+      data_entrada:fmt(s),
+      data_saida:fmt(e)
+    }));
+  },[draft]);
+  if(!draft) return null;
+  const pos=placeNear(anchor.x, anchor.y, 420, 360);
+  const onChange=(k,v)=>setForm(s=>({...s,[k]:v}));
+  const submit=async()=>{ try{
+    const payload={
+      quarto:Number(form.quarto),
+      nome_cliente:form.nome_cliente.trim(),
+      email:form.email.trim(),
+      telefone:form.telefone.trim(),
+      status:form.status,
+      data_entrada:new Date(form.data_entrada).toISOString(),
+      data_saida:new Date(form.data_saida).toISOString(),
+      tipo_quarto:form.tipo_quarto||undefined
+    };
+    const r=await fetch(API_CREATE,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken")||"" },
+      body:JSON.stringify(payload)
+    });
+    if(!r.ok){ const j=await r.json().catch(()=>({})); throw new Error(j.error||`Falha (${r.status}) ao criar reserva`); }
+    await r.json(); toast("Reserva criada."); onSaved(); onClose();
+  }catch(e){ toast(API_TOAST.err(e)); } };
+  return(
+    <div className="popover" style={{left:pos.left, top:pos.top}}>
+      <div className="pop-header">Nova reserva — {draft.roomLabel}</div>
+      <div className="pop-body">
+        <div className="pop-row">
+          <select value={form.quarto} onChange={e=>onChange("quarto", e.target.value)}>
+            <option value="">Selecione o quarto</option>
+            {quartos.map(q=> <option key={q.id} value={q.id}>{q.label}</option>)}
+          </select>
+        </div>
+        <div className="pop-row">
+          <input placeholder="Nome do cliente" value={form.nome_cliente} onChange={e=>onChange("nome_cliente", e.target.value)}/>
+        </div>
+        <div className="pop-row">
+          <input type="email" placeholder="Email" value={form.email} onChange={e=>onChange("email", e.target.value)}/>
+          <input placeholder="Telefone" value={form.telefone} onChange={e=>onChange("telefone", e.target.value)}/>
+        </div>
+        <div className="pop-row">
+          <select value={form.status} onChange={e=>onChange("status", e.target.value)}>
+            <option value="confirmada">Confirmada</option>
+            <option value="pendente">Pendente</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+          <select value={form.tipo_quarto} onChange={e=>onChange("tipo_quarto", e.target.value)}>
+            <option value="">Tipo (opcional)</option>
+            <option value="standard">Standard</option>
+            <option value="luxo">Luxo</option>
+            <option value="suite">Suite</option>
+          </select>
+        </div>
+        <div className="pop-row">
+          <input type="datetime-local" value={form.data_entrada} onChange={e=>onChange("data_entrada", e.target.value)}/>
+          <input type="datetime-local" value={form.data_saida} onChange={e=>onChange("data_saida", e.target.value)}/>
+        </div>
+      </div>
+      <div className="pop-actions">
+        <div></div>
+        <div style={{display:"flex", gap:8}}>
+          <button className="btn" onClick={onClose}>Fechar</button>
+          <button className="btn primary" onClick={submit}>Salvar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- App ---------- */
 function App(){
-  const today = new Date();
-  const defaultStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const [startISO, setStartISO] = React.useState(toISODateLocal(defaultStart));
-  const [winDays, setWinDays]   = React.useState(60);
-  const [data, setData]         = React.useState(null);
-  const [loading, setLoading]   = React.useState(false);
+  const today=new Date();
+  const defStart=new Date(today.getFullYear(),today.getMonth(),1);
+  const [startISO,setStartISO]=React.useState(defStart.toISOString().slice(0,10));
+  const [winDays,setWinDays]=React.useState(60);
+  const [data,setData]=React.useState(null);
+  const [loading,setLoading]=React.useState(false);
 
-  const [editOpen, setEditOpen] = React.useState(false);
-  const [editPos, setEditPos]   = React.useState({x:0,y:0});
-  const [selectedRes, setSelectedRes] = React.useState(null);
+  const [toastMsg,setToastMsg]=React.useState("");
+  const toast=(m)=>{ setToastMsg(m); setTimeout(()=>setToastMsg(""), 2500); };
 
-  const [newOpen, setNewOpen] = React.useState(false);
-  const [newPos, setNewPos]   = React.useState({x:0,y:0});
-  const [newRoom, setNewRoom] = React.useState(null);
-  const [newDateISO, setNewDateISO] = React.useState(null);
+  const [editAnchor,setEditAnchor]=React.useState(null);
+  const [editRes,setEditRes]=React.useState(null);
 
-  const load = async ()=>{
+  const [createAnchor,setCreateAnchor]=React.useState(null);
+  const [createDraft,setCreateDraft]=React.useState(null);
+
+  const load=async()=>{
     setLoading(true);
     try{
-      const url = `/reservas/api/gantt_window/?start=${startISO}&days=${winDays}`;
-      const r = await fetch(url);
-      const j = await r.json();
+      const url=`/reservas/api/gantt_window/?start=${startISO}&days=${winDays}`;
+      const r=await fetch(url);
+      const j=await r.json();
       setData(j);
-    } finally {
-      setLoading(false);
-    }
+    }finally{ setLoading(false); }
   };
   React.useEffect(()=>{ load(); }, [startISO, winDays]);
 
-  const handleBarClick = (evt, r)=>{
-    evt.stopPropagation();
-    setSelectedRes(r);
-    setEditPos({ x: evt.clientX + 12, y: evt.clientY + 12 });
-    setEditOpen(true);
-  };
-  const handleEmptyClick = (evt, room, iso)=>{
-    evt.stopPropagation();
-    setNewRoom(room);
-    setNewDateISO(iso);
-    setNewPos({ x: evt.clientX + 12, y: evt.clientY + 12 });
-    setNewOpen(true);
+  const onBarClick=(evt,res)=>{
+    setEditAnchor({x:evt.clientX, y:evt.clientY});
+    setEditRes(res);
   };
 
-  React.useEffect(()=>{
-    const closeAll = ()=>{ setEditOpen(false); setNewOpen(false); };
-    const onDoc = ()=> closeAll();
-    document.addEventListener('click', onDoc);
-    return ()=> document.removeEventListener('click', onDoc);
-  },[]);
+  // >>> ALTERADO: usa anchor vinda da célula clicada
+  const onCreateRequest=({roomId, roomLabel, startISO, anchor})=>{
+    setCreateAnchor(anchor);
+    setCreateDraft({roomId, roomLabel, startISO});
+  };
 
-  return (
+  const quartosFlat = React.useMemo(()=>{
+    if(!data) return [];
+    return data.quartos.map(q=>({id:q.id, label:q.label}));
+  },[data]);
+
+  return(
     <div className="gantt-wrap">
       <Toolbar
         startISO={startISO}
@@ -539,29 +570,37 @@ function App(){
         onChange={(s,d)=>{ setStartISO(s); setWinDays(d); }}
         onReload={load}
       />
-      {loading && <div style={{padding:'8px 0', color:'#6b7280'}}>Carregando…</div>}
-      {data && <Grid payload={data} onBarClick={handleBarClick} onEmptyClick={handleEmptyClick} />}
-
-      {editOpen && selectedRes && (
-        <EditPopover
-          x={editPos.x}
-          y={editPos.y}
-          reserva={selectedRes}
-          onClose={()=>setEditOpen(false)}
-          onSaved={load}
+      {loading && <div style={{padding:"8px 0", color:"#6b7280"}}>Carregando…</div>}
+      {data && (
+        <Grid
+          payload={data}
+          onBarClick={onBarClick}
+          onCreateRequest={onCreateRequest}
         />
       )}
 
-      {newOpen && newRoom && newDateISO && (
-        <NewModal
-          x={newPos.x}
-          y={newPos.y}
-          room={newRoom}
-          dateISO={newDateISO}
-          onClose={()=>setNewOpen(false)}
+      {editRes && editAnchor && (
+        <EditReservationPopover
+          anchor={editAnchor}
+          reserva={editRes}
+          onClose={()=>{ setEditRes(null); setEditAnchor(null); }}
           onSaved={load}
+          toast={(m)=>setToastMsg(m)}
         />
       )}
+
+      {createDraft && createAnchor && (
+        <CreateReservationPopover
+          anchor={createAnchor}
+          draft={createDraft}
+          quartos={quartosFlat}
+          onClose={()=>{ setCreateDraft(null); setCreateAnchor(null); }}
+          onSaved={load}
+          toast={(m)=>setToastMsg(m)}
+        />
+      )}
+
+      <Toast msg={toastMsg}/>
     </div>
   );
 }
