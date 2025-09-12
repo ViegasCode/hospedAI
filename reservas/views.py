@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import calendar
+# reservas/views_api_reservas.py
 
 from django.http import JsonResponse
 from django.utils import timezone
@@ -770,52 +773,6 @@ import json
 
 from .models import Reserva
 
-@csrf_exempt
-def reserva_update_api(request, pk):
-    if request.method != "PATCH":
-        return HttpResponseNotAllowed(["PATCH"])
-
-    try:
-        res = Reserva.objects.select_related("quarto").get(pk=pk)
-    except Reserva.DoesNotExist:
-        return JsonResponse({"error": "Reserva não encontrada"}, status=404)
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except Exception:
-        return JsonResponse({"error": "JSON inválido"}, status=400)
-
-    # Atualiza status
-    status_novo = payload.get("status")
-    if status_novo in {"confirmada", "pendente", "cancelada"}:
-        res.status = status_novo
-
-    # Atualiza datas (start/end em ISO 8601)
-    start_iso = payload.get("start")
-    end_iso   = payload.get("end")
-    if start_iso:
-        dt = parse_datetime(start_iso)
-        if dt:
-            if is_naive(dt):
-                dt = make_aware(dt)
-            res.data_entrada = dt
-    if end_iso:
-        dt = parse_datetime(end_iso)
-        if dt:
-            if is_naive(dt):
-                dt = make_aware(dt)
-            res.data_saida = dt
-
-    res.save()
-
-    return JsonResponse({
-        "id": res.id,
-        "cliente": res.nome_cliente,
-        "status": res.status,
-        "start": res.data_entrada.isoformat(),
-        "end": res.data_saida.isoformat(),
-        "quarto": {"id": res.quarto_id, "label": str(res.quarto)}
-    })
 from datetime import date, datetime, timedelta
 from django.http import JsonResponse
 from django.utils.timezone import make_aware, is_aware, get_current_timezone
@@ -914,3 +871,192 @@ def gantt_window_api(request):
         })
 
     return JsonResponse(payload)
+
+
+import json
+from typing import Any, Dict
+
+from django.http import JsonResponse, HttpRequest
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.shortcuts import get_object_or_404
+
+from quartos.models import Quarto
+from .models import Reserva
+
+
+def _json(request: HttpRequest) -> Dict[str, Any]:
+    try:
+        body = request.body.decode("utf-8") if isinstance(request.body, (bytes, bytearray)) else request.body
+        return json.loads(body or "{}")
+    except Exception:
+        return {}
+
+def _to_aware(dt_str: str | None):
+    """Converte ISO string para datetime c/ timezone. Aceita naive/aware."""
+    if not dt_str:
+        return None
+    dt = parse_datetime(dt_str)
+    if dt is None:
+        return None
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+def _reserva_to_dict(res: Reserva) -> Dict[str, Any]:
+    """Forma usada em várias respostas JSON."""
+    return {
+        "id": res.id,
+        "quarto": res.quarto_id,
+        "tipo_quarto": res.tipo_quarto,
+        "nome_cliente": res.nome_cliente,
+        "email": res.email,
+        "telefone": res.telefone,
+        "status": res.status,
+        "data_entrada": res.data_entrada.isoformat(),
+        "data_saida": res.data_saida.isoformat(),
+        # aliases úteis ao front do Gantt
+        "cliente": res.nome_cliente,
+        "start": res.data_entrada.isoformat(),
+        "end": res.data_saida.isoformat(),
+        "label_quarto": f"{res.quarto.numero} · {res.quarto.tipo}" if res.quarto_id else None,
+    }
+
+def _validate_status(val: str | None) -> str:
+    allowed = {"pendente", "confirmada", "cancelada"}
+    v = (val or "pendente").lower()
+    if v not in allowed:
+        raise ValueError(f"status inválido: {v}")
+    return v
+
+def _infer_tipo_quarto_from_quarto(quarto: Quarto) -> str:
+    # seus choices de Reserva são: "standard", "luxo", "suite"
+    return (quarto.tipo or "").lower()
+
+@require_http_methods(["POST"])
+# use UMA das duas linhas abaixo:
+# 1) Se você já está enviando o csrftoken do template -> deixe csrf_protect
+@csrf_protect
+# 2) Se tiver erro de CSRF durante o deploy, troque para @csrf_exempt temporariamente
+# @csrf_exempt
+def reservas_create_api(request: HttpRequest):
+    """
+    POST /reservas/api/reservas/
+    Payload esperado (JSON):
+    {
+      "quarto": 7,
+      "nome_cliente": "...", "email": "...", "telefone": "...",
+      "status": "confirmada" | "pendente" | "cancelada",
+      "data_entrada": "2025-09-02T17:00:00Z",
+      "data_saida":   "2025-09-05T15:00:00Z",
+      "tipo_quarto": "standard|luxo|suite"  (opcional; será inferido do Quarto se ausente)
+    }
+    """
+    data = _json(request)
+
+    # Campos obrigatórios básicos
+    quarto_id = data.get("quarto")
+    if not quarto_id:
+        return JsonResponse({"error": "Campo 'quarto' é obrigatório."}, status=400)
+
+    quarto = get_object_or_404(Quarto, pk=quarto_id)
+
+    nome_cliente = (data.get("nome_cliente") or "").strip()
+    email = (data.get("email") or "").strip()
+    telefone = (data.get("telefone") or "").strip()
+    if not nome_cliente:
+        return JsonResponse({"error": "Campo 'nome_cliente' é obrigatório."}, status=400)
+
+    dt_in = _to_aware(data.get("data_entrada"))
+    dt_out = _to_aware(data.get("data_saida"))
+    if not dt_in or not dt_out:
+        return JsonResponse({"error": "Data/hora de entrada e saída são obrigatórias (ISO)."}, status=400)
+    if dt_out <= dt_in:
+        return JsonResponse({"error": "data_saida deve ser maior que data_entrada."}, status=400)
+
+    try:
+        status = _validate_status(data.get("status"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    tipo_quarto = (data.get("tipo_quarto") or "").strip().lower()
+    if not tipo_quarto:
+        tipo_quarto = _infer_tipo_quarto_from_quarto(quarto)
+
+    # (Opcional) checar conflito simples de ocupação aqui se quiser…
+
+    res = Reserva.objects.create(
+        nome_cliente=nome_cliente,
+        email=email,
+        telefone=telefone,
+        tipo_quarto=tipo_quarto,
+        data_entrada=dt_in,
+        data_saida=dt_out,
+        status=status,
+        quarto=quarto,
+    )
+
+    return JsonResponse(_reserva_to_dict(res), status=201)
+
+
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.utils.dateparse import parse_datetime
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse, HttpResponseNotAllowed
+from django.utils import timezone
+
+@require_http_methods(["PATCH", "PUT"])
+@csrf_exempt  # se preferir CSRF, troque para @csrf_protect e garanta o X-CSRFToken no fetch
+def reserva_update_api(request, pk: int):
+    res = get_object_or_404(Reserva, pk=pk)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "JSON inválido"}, status=400)
+
+    # status
+    st = payload.get("status")
+    if st in {"pendente", "confirmada", "cancelada"}:
+        res.status = st
+
+    # datas — aceita data_entrada/data_saida OU start/end
+    start_iso = payload.get("data_entrada") or payload.get("start")
+    end_iso   = payload.get("data_saida")   or payload.get("end")
+
+    def _aware(dt_str):
+        if not dt_str: return None
+        dt = parse_datetime(dt_str)
+        if dt is None: return None
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_current_timezone())
+        return dt
+
+    if start_iso or end_iso:
+        dt_in  = _aware(start_iso) or res.data_entrada
+        dt_out = _aware(end_iso)   or res.data_saida
+        if dt_out <= dt_in:
+            return JsonResponse({"error":"data_saida deve ser maior que data_entrada."}, status=400)
+        res.data_entrada = dt_in
+        res.data_saida   = dt_out
+
+    # mudar quarto (opcional)
+    if "quarto" in payload and payload["quarto"]:
+        q = get_object_or_404(Quarto, pk=payload["quarto"])
+        res.quarto = q
+        res.tipo_quarto = (q.tipo or "").lower()
+
+    res.save()
+
+    return JsonResponse({
+        "id": res.id,
+        "quarto": res.quarto_id,
+        "status": res.status,
+        "nome_cliente": res.nome_cliente,
+        "data_entrada": res.data_entrada.isoformat(),
+        "data_saida": res.data_saida.isoformat(),
+    })
+
