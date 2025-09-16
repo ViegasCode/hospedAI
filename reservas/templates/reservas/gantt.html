@@ -75,15 +75,9 @@
     text-align:center; border-left:1px solid var(--line);
     background:#fff;
   }
-  .day .dow{
-    font-size:.72rem; line-height:1; color:#6b7280; letter-spacing:.2px;
-  }
-  .day .dnum{
-    font-size:.95rem; line-height:1; color:#111827; font-weight:700;
-  }
-  .day.weekend{
-    background:#f9f9ff;
-  }
+  .day .dow{ font-size:.72rem; line-height:1; color:#6b7280; letter-spacing:.2px; }
+  .day .dnum{ font-size:.95rem; line-height:1; color:#111827; font-weight:700; }
+  .day.weekend{ background:#f9f9ff; }
   .day.weekend .dow{ color:#4f46e5; font-weight:700; }
 
   /* LINHAS */
@@ -97,6 +91,7 @@
     position:relative; min-height:38px; background:#fff;
     border-bottom:1px solid var(--line);
 
+    /* GRADE DE DIAS */
     background-image: repeating-linear-gradient(
       to right,
       transparent 0,
@@ -136,16 +131,13 @@
     position:absolute; top:6px; height:26px; border-radius:10px;
     display:flex; align-items:center; gap:8px; padding:0 .6rem 0 .45rem;
     color:#fff; font-weight:700; font-size:.86rem;
-    white-space:nowrap; text-overflow:ellipsis; cursor:pointer;
+    white-space:nowrap; text-overflow:ellipsis; cursor:grab;
     background: linear-gradient(90deg,var(--primary),var(--primary-2));
     box-shadow: 0 8px 20px rgba(79,70,229,.25), inset 0 1px 0 rgba(255,255,255,.25);
     transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+    user-select: none;
   }
-  .bar::after{
-    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-    background: linear-gradient(to bottom, rgba(255,255,255,.35), rgba(255,255,255,0) 40%);
-    mix-blend-mode: screen; opacity:.6;
-  }
+  .bar:active{ cursor:grabbing; }
   .bar:hover{ transform: translateY(-1px); box-shadow: 0 10px 28px rgba(79,70,229,.34), inset 0 1px 0 rgba(255,255,255,.28); filter: saturate(1.08); }
 
   .bar.confirmada{ background: linear-gradient(90deg, #4f46e5, #6366f1); }
@@ -167,6 +159,19 @@
     background:rgba(255,255,255,.2);
     border:1px solid rgba(255,255,255,.35);
   }
+
+  .handle{ position:absolute; top:0; width:8px; height:100%; cursor:ew-resize; opacity:0; transition:opacity .1s ease; }
+  .bar:hover .handle{ opacity:1; }
+  .handle.left{ left:-3px; }
+  .handle.right{ right:-3px; }
+
+  .ghost{
+    position:absolute; top:6px; height:26px; border-radius:8px;
+    background: rgba(79,70,229,.25);
+    border:1px dashed rgba(79,70,229,.65);
+    pointer-events:none;
+  }
+  .ghost.blocked{ background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.7); }
 
   /* Hover sutil da célula */
   .cell-hover{
@@ -213,7 +218,7 @@
   .pill.pendente{ background:linear-gradient(90deg,#f59e0b,#fbbf24); color:#111827; }
   .pill.cancelada{ background:linear-gradient(90deg,#ef4444,#f87171); color:#fff; }
 
-  /* POPOVER / MODAIS + TOAST (mantidos) */
+  /* POPOVER / MODAIS + TOAST */
   .popover{ position: fixed; z-index: 60; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 16px 50px rgba(2,6,23,.18); width:min(92vw, 420px); }
   .pop-header{ padding:.75rem .9rem; border-bottom:1px solid var(--line); font-weight:700; }
   .pop-body{ padding:.8rem .9rem; display:flex; flex-direction:column; gap:.6rem; }
@@ -228,6 +233,7 @@
 
 <div id="HospedAIGantt"></div>
 
+<!-- React via CDN + Babel -->
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -247,7 +253,7 @@ function getCookie(name){
   const parts=value.split(`; ${name}=`);
   if(parts.length===2) return parts.pop().split(";").shift();
 }
-const csrftoken = getCookie("csrftoken");
+const csrftoken = getCookie("csrftoken") || "";
 
 function buildWindow(startISO, days){
   const start = new Date(startISO+"T00:00:00");
@@ -270,10 +276,7 @@ const fmtDateTime = (iso) => {
   const p=n=>n<10?"0"+n:n;
   return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
-const diffNights = (startIso, endIso) => {
-  const ms = new Date(endIso) - new Date(startIso);
-  return Math.max(1, Math.round(ms / DAY_MS));
-};
+const diffNights = (startIso, endIso) => Math.max(1, Math.round((new Date(endIso) - new Date(startIso)) / DAY_MS));
 const DOW_PT = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
 /* ===== ÍCONES DE STATUS ===== */
@@ -385,12 +388,26 @@ function ReservationTooltip({tip}){
   );
 }
 
-function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarHover, onBarLeave}){
+/* ===== helpers ===== */
+function overlaps(aStart,aEnd,bStart,bEnd){ return aStart < bEnd && aEnd > bStart; }
+
+/* ===== Row com drag/resize + DRAG GUARD + ghostRef ===== */
+function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarHover, onBarLeave, allRowsMeta, rowIndex}){
   const base=new Date(windowStart+"T00:00:00");
   const reservas=(room.reservas||[]).map(r=>({...r,s:new Date(r.start),e:new Date(r.end), roomLabel: room.label}));
+  const trackRef = React.useRef(null);
 
   const [hoverIdx,setHoverIdx]=React.useState(null);
   const [blocked,setBlocked]=React.useState(false);
+
+  const moveRef = React.useRef(null);
+  const draggingRef = React.useRef(null);
+  const dragGuardRef = React.useRef(false);
+  const [ghost,setGhost] = React.useState(null);
+  const ghostRef = React.useRef(null);              // <<< NOVO
+  React.useEffect(()=>{ ghostRef.current = ghost; }, [ghost]);  // sempre manter atualizado
+
+  React.useEffect(()=>()=>{ if(moveRef.current) window.removeEventListener("mousemove", moveRef.current); },[]);
 
   const isBlocked=(idx)=>{
     const dayStart=new Date(base.getTime()+idx*DAY_MS);
@@ -404,14 +421,149 @@ function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarH
     if(idx<0)idx=0;if(idx>=windowDays)idx=windowDays-1;
     setHoverIdx(idx);setBlocked(isBlocked(idx));
   };
-  const onLeave=()=>{setHoverIdx(null);setBlocked(false);};
+  const onLeave=()=>{setHoverIdx(null);setBlocked(false); onBarLeave?.();};
 
   const onTrackClick=(e)=>{
+    if (dragGuardRef.current) return; // não crie após drag
     if(hoverIdx==null||blocked)return;
     const start=new Date(base.getTime()+hoverIdx*DAY_MS);
     const anchor={ x:e.clientX, y:e.clientY + 28 };
     onCreateRequest?.({ roomId:room.id, roomLabel:room.label, startISO:start.toISOString(), anchor });
   };
+
+  const snapIndex = (clientX)=>{
+    const el = trackRef.current;
+    if(!el) return 0;
+    const rect = el.getBoundingClientRect();
+    let idx = Math.round((clientX - rect.left)/COL_W);
+    if(idx<0) idx=0;
+    if(idx>windowDays) idx=windowDays;
+    return idx;
+  };
+  const dateFromIdx = (idx)=> new Date(base.getTime()+idx*DAY_MS);
+  const idxFromDate = (d)=> Math.round((d - base)/DAY_MS);
+
+  function hasConflict(qReservas, ignoreId, start, end){
+    return qReservas.some(r=>{
+      if(ignoreId && r.id===ignoreId) return false;
+      if(r.status==="cancelada") return false;
+      const rs = new Date(r.start||r.s);
+      const re = new Date(r.end||r.e);
+      return overlaps(start,end,rs,re);
+    });
+  }
+  function rowIndexFromClientY(clientY){
+    const g = allRowsMeta;
+    if(!g?.rowTop || !g?.rowH) return rowIndex;
+    const i = Math.floor((clientY - g.rowTop)/g.rowH);
+    return Math.max(0, Math.min(g.count-1, i));
+  }
+
+  function beginGlobalDrag(moveFn, upFn){
+    dragGuardRef.current = true;
+    document.body.style.userSelect = "none";
+    moveRef.current = (e)=>{ e.preventDefault(); moveFn(e); };
+    const up = (e)=>{
+      // Chama primeiro o handler de mouseup (usa ghostRef), depois encerra drag
+      upFn?.(e);
+      endGlobalDrag();
+    };
+    window.addEventListener("mousemove", moveRef.current, {passive:false});
+    window.addEventListener("mouseup", up, {once:true});
+  }
+  function endGlobalDrag(){
+    if(moveRef.current) window.removeEventListener("mousemove", moveRef.current);
+    moveRef.current = null;
+    document.body.style.userSelect = "";
+    setTimeout(()=>{ dragGuardRef.current = false; }, 80);
+  }
+
+  function startDragMove(e, r){
+    e.stopPropagation(); e.preventDefault();
+    const rect = trackRef.current?.getBoundingClientRect();
+    const offsetX = rect ? (e.clientX - (rect.left + (idxFromDate(r.s)*COL_W))) : 0;
+    draggingRef.current = { mode:"move", resId:r.id, start:new Date(r.s), end:new Date(r.e), offsetX, rowIndex };
+    setHoverIdx(null);
+    beginGlobalDrag(onMouseMoveDrag, onMouseUpDrag);
+  }
+  function startResize(e, r, side){
+    e.stopPropagation(); e.preventDefault();
+    draggingRef.current = { mode:(side==="L"?"resizeL":"resizeR"), resId:r.id, start:new Date(r.s), end:new Date(r.e), rowIndex };
+    setHoverIdx(null);
+    beginGlobalDrag(onMouseMoveDrag, onMouseUpDrag);
+  }
+
+  function onMouseMoveDrag(e){
+    const dragging = draggingRef.current;
+    if(!dragging) return;
+
+    const destRow = (dragging.mode==="move") ? rowIndexFromClientY(e.clientY) : dragging.rowIndex;
+    let s = new Date(dragging.start);
+    let t = new Date(dragging.end);
+
+    if(dragging.mode==="move"){
+      const el = trackRef.current;
+      const rect = el ? el.getBoundingClientRect() : {left:0};
+      const leftPx = e.clientX - rect.left - dragging.offsetX;
+      const startIdx = Math.round(leftPx / COL_W);
+      const durDays = Math.max(1, Math.round((t - s)/DAY_MS));
+      s = dateFromIdx(Math.max(0, Math.min(windowDays-1, startIdx)));
+      t = new Date(s.getTime() + durDays*DAY_MS);
+      if(t > new Date(base.getTime()+windowDays*DAY_MS)){
+        t = new Date(base.getTime()+windowDays*DAY_MS);
+        s = new Date(t.getTime() - durDays*DAY_MS);
+      }
+    }else if(dragging.mode==="resizeL"){
+      const idx = snapIndex(e.clientX);
+      const maxIdx = idxFromDate(t)-1;
+      const clamped = Math.max(0, Math.min(maxIdx, idx));
+      s = dateFromIdx(clamped);
+    }else if(dragging.mode==="resizeR"){
+      const idx = snapIndex(e.clientX);
+      const minIdx = idxFromDate(s)+1;
+      const clamped = Math.max(minIdx, Math.min(windowDays, idx));
+      t = dateFromIdx(clamped);
+    }
+
+    const targetRow = allRowsMeta.rows[destRow];
+    const conflict = hasConflict(targetRow.reservas, dragging.resId, s, t);
+
+    const left = Math.max(0, Math.min(windowDays*COL_W, idxFromDate(s)*COL_W));
+    const width = Math.max(COL_W, Math.round((t - s)/DAY_MS)*COL_W);
+    const g = {left, width, blocked:conflict, destRow, s, t};
+
+    ghostRef.current = g;   // <<< manter ref atualizado
+    setGhost(g);
+  }
+
+  async function onMouseUpDrag(){
+    const dragging = draggingRef.current;
+    const g = ghostRef.current;   // <<< usa o ref, não o state do closure
+    draggingRef.current = null;
+    setGhost(null);
+
+    if(!dragging || !g) return;     // se não moveu de verdade
+    if(g.blocked) return;           // conflito detectado
+
+    const payload = { data_entrada: g.s.toISOString(), data_saida: g.t.toISOString() };
+    if(g.destRow !== dragging.rowIndex){
+      payload.quarto = allRowsMeta.rows[g.destRow].id;
+    }
+    try{
+      const res = await fetch(API_UPDATE(dragging.resId),{
+        method:"PATCH",
+        headers:{ "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken")||"" },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok){
+        const j = await res.json().catch(()=>({}));
+        throw new Error(j.error||`Erro ${res.status}`);
+      }
+      window.dispatchEvent(new CustomEvent("gantt:reload"));
+    }catch(err){
+      console.error(err);
+    }
+  }
 
   const clamp=(s,e)=>{
     const winStart=base.getTime();const winEnd=base.getTime()+windowDays*DAY_MS;
@@ -433,20 +585,18 @@ function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarH
   return(
     <div className="row" style={{'--labelW':LABEL_W+'px'}}>
       <div className="label">{room.label}</div>
-      <div className="track" style={{'--colW':COL_W+'px', width:(windowDays*COL_W)+'px'}}
+      <div className="track" ref={trackRef} style={{'--colW':COL_W+'px', width:(windowDays*COL_W)+'px'}}
         onMouseMove={onMove} onMouseLeave={onLeave} onClick={onTrackClick}>
 
         <div className="wknd-layer" style={{'--colW':COL_W+'px'}}>
-          {wkndIdx.map(i=>(
-            <div key={i} className="wknd-cell" style={{left:(i*COL_W)+'px'}}></div>
-          ))}
+          {wkndIdx.map(i=>(<div key={i} className="wknd-cell" style={{left:(i*COL_W)+'px'}}></div>))}
         </div>
-
         <div className="grid-lines" style={{'--colW':COL_W+'px'}}></div>
 
         {hoverIdx!=null&&(
           <div className={`cell-hover ${blocked?'blocked':''}`} style={{left:(hoverIdx*COL_W)+'px'}}/>
         )}
+        {ghost && (<div className={`ghost ${ghost.blocked?'blocked':''}`} style={{left:ghost.left+'px', width:ghost.width+'px'}}></div>)}
 
         {reservas.map(r=>{
           const proj=clamp(r.s,r.e); if(!proj) return null;
@@ -458,9 +608,12 @@ function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarH
               onMouseEnter={(evt)=> onBarHover?.(evt, r)}
               onMouseMove={(evt)=> onBarHover?.(evt, r)}
               onMouseLeave={()=> onBarLeave?.()}
-              onClick={(evt)=>{evt.stopPropagation(); onBarClick?.(evt,r);}}>
+              onMouseDown={(evt)=> startDragMove(evt, r)}
+              onClick={(evt)=>{ if (dragGuardRef.current) return; evt.stopPropagation(); onBarClick?.(evt,r); }}>
               <StatusIcon status={st}/>
               <span>{r.cliente||'—'}</span>
+              <span className="handle left"  onMouseDown={(e)=>startResize(e,r,"L")}></span>
+              <span className="handle right" onMouseDown={(e)=>startResize(e,r,"R")}></span>
             </div>
           );
         })}
@@ -469,16 +622,64 @@ function Row({room, windowStart, windowDays, onBarClick, onCreateRequest, onBarH
   );
 }
 
-function Grid({payload, onBarClick, onCreateRequest, onBarHover, onBarLeave}){
+function Grid({payload, onBarClick, onCreateRequest, onBarHover, onBarLeave, onReload}){
   const {days,groups}=buildWindow(payload.window_start, payload.window_days);
+
+  const containerRef = React.useRef(null);
+  const [rowGeom,setRowGeom] = React.useState({rowTop:0,rowH:40});
+  const rowsMeta = React.useMemo(()=>{
+    const rows = payload.quartos.map(q=>({
+      id:q.id, label:q.label, reservas:q.reservas||[]
+    }));
+    return {rows, count: rows.length};
+  },[payload]);
+
+  React.useEffect(()=>{
+    const t = containerRef.current?.querySelector(".track");
+    const r = containerRef.current?.querySelector(".row");
+    if(t && r){
+      const tb = t.getBoundingClientRect();
+      const rb = r.getBoundingClientRect();
+      setRowGeom({rowTop: tb.top, rowH: rb.height});
+    }
+  },[payload]);
+
+  React.useEffect(()=>{
+    const h=()=> onReload();
+    window.addEventListener("gantt:reload",h);
+    return ()=> window.removeEventListener("gantt:reload",h);
+  },[onReload]);
+
+  const widthPx=days.length*COL_W+"px";
+  const cols=`repeat(${days.length},${COL_W}px)`;
+
   return(
     <div className="gantt-grid">
       <div className="scroller" style={{'--labelW':LABEL_W+'px'}}>
         <div className="labels"></div>
-        <div className="timeline">
-          <Header days={days} groups={groups}/>
+        <div className="timeline" ref={containerRef}>
+          <div className="header" style={{'--labelW':LABEL_W+'px'}}>
+            <div className="left">Quarto</div>
+            <div className="right">
+              <div className="months" style={{gridTemplateColumns:cols,width:widthPx}}>
+                {groups.map((g,i)=><div key={i} className="month" style={{gridColumn:`span ${g.span}`}}>{g.label}</div>)}
+              </div>
+              <div className="days" style={{gridTemplateColumns:cols,width:widthPx}}>
+                {days.map((d,i)=>{
+                  const w=d.date.getDay(); const isWknd=(w===0||w===6);
+                  return (
+                    <div key={i} className={`day ${isWknd?'weekend':''}`}>
+                      <span className="dow">{DOW_PT[w]}</span>
+                      <span className="dnum">{d.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="rows">
-            {payload.quartos.map(q=>(
+            {payload.quartos.map((q,idx)=>(
               <Row key={q.id}
                 room={q}
                 windowStart={payload.window_start}
@@ -487,6 +688,8 @@ function Grid({payload, onBarClick, onCreateRequest, onBarHover, onBarLeave}){
                 onCreateRequest={onCreateRequest}
                 onBarHover={onBarHover}
                 onBarLeave={onBarLeave}
+                allRowsMeta={{...rowsMeta, ...rowGeom}}
+                rowIndex={idx}
               />
             ))}
           </div>
@@ -507,16 +710,14 @@ function placeNear(x,y,width=420,height=300,margin=10){
 function Toast({msg}){ if(!msg) return null; return <div className="toast">{msg}</div>; }
 const API_TOAST = { ok:(s)=>s, err:(e)=> (typeof e==='string'? e : (e?.message || 'Erro inesperado')) };
 
-/* ---------- Popover de edição ---------- */
+/* ---------- Popovers (sem mudanças funcionais) ---------- */
 function EditReservationPopover({anchor, reserva, onClose, onSaved, toast}){
   const [start,setStart]=React.useState("");
   const [end,setEnd]=React.useState("");
   React.useEffect(()=>{
     if(!reserva) return;
-    const toLocal=(iso)=>{
-      const d=new Date(iso); const p=n=>n<10?"0"+n:n;
-      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-    };
+    const toLocal=(iso)=>{ const d=new Date(iso); const p=n=>n<10?"0"+n:n;
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
     setStart(toLocal(reserva.start)); setEnd(toLocal(reserva.end));
   },[reserva]);
   if(!reserva) return null;
@@ -556,17 +757,10 @@ function EditReservationPopover({anchor, reserva, onClose, onSaved, toast}){
   );
 }
 
-/* ---------- Popover de criação ---------- */
 function CreateReservationPopover({anchor, draft, quartos, onClose, onSaved, toast}){
   const [form,setForm]=React.useState({
-    quarto: draft?.roomId || "",
-    nome_cliente:"",
-    email:"",
-    telefone:"",
-    status:"confirmada",
-    data_entrada:"",
-    data_saida:"",
-    tipo_quarto:""
+    quarto: draft?.roomId || "", nome_cliente:"", email:"", telefone:"",
+    status:"confirmada", data_entrada:"", data_saida:"", tipo_quarto:""
   });
   React.useEffect(()=>{
     if(!draft) return;
@@ -597,9 +791,9 @@ function CreateReservationPopover({anchor, draft, quartos, onClose, onSaved, toa
       headers:{ "Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken")||"" },
       body:JSON.stringify(payload)
     });
-    if(!r.ok){ const j=await r.json().catch(()=>({})); throw new Error(j.error||`Falha (${r.status}) ao criar reserva`); }
+    if(!r.ok){ const j=await r.json().catch(()=>({})); throw new Error(j.error||`Falha (${r.status}) ao criar`); }
     await r.json(); onSaved(); onClose();
-  }catch(e){ toast(API_TOAST.err(e)); } };
+  }catch(e){ toast(e.message||"Erro ao criar"); } };
   return(
     <div className="popover" style={{left:pos.left, top:pos.top}}>
       <div className="pop-header">Nova reserva — {draft.roomLabel}</div>
@@ -677,18 +871,10 @@ function App(){
   };
   React.useEffect(()=>{ load(); }, [startISO, winDays]);
 
-  const onBarClick=(evt,res)=>{
-    setEditAnchor({x:evt.clientX, y:evt.clientY});
-    setEditRes(res);
-  };
-
-  const onCreateRequest=({roomId, roomLabel, startISO, anchor})=>{
-    setCreateAnchor(anchor);
-    setCreateDraft({roomId, roomLabel, startISO});
-  };
+  const onBarClick=(evt,res)=>{ setEditAnchor({x:evt.clientX, y:evt.clientY}); setEditRes(res); };
+  const onCreateRequest=({roomId, roomLabel, startISO, anchor})=>{ setCreateAnchor(anchor); setCreateDraft({roomId, roomLabel, startISO}); };
 
   const quartosFlat = React.useMemo(()=> data ? data.quartos.map(q=>({id:q.id, label:q.label})) : [], [data]);
-
   const handleBarHover = (evt, res) => setTip({ x: evt.clientX, y: evt.clientY, data: res });
   const handleBarLeave = () => setTip(null);
 
@@ -708,6 +894,7 @@ function App(){
           onCreateRequest={onCreateRequest}
           onBarHover={handleBarHover}
           onBarLeave={handleBarLeave}
+          onReload={load}
         />
       )}
 
