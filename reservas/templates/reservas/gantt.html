@@ -886,7 +886,7 @@ function App(){
         onChange={(s,d)=>{ setStartISO(s); setWinDays(d); }}
         onReload={load}
       />
-<!--      {loading && <div style={{padding:"8px 0", color:"#6b7280"}}>Carregando…</div>}-->
+      {loading}
       {data && (
         <Grid
           payload={data}
